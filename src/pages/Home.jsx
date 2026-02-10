@@ -1,8 +1,21 @@
-import { useState } from "react";
-import ProfileCard from "../components/ProfileCard";
+import { useState } from "react"
+import ProfileCard from "../components/ProfileCard"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function Home() {
-  const [display, setDisplay] = useState(true);
+  const [display, setDisplay] = useState(true)
+  const [visible, setVisible] = useState(true)
+  const [exitDirection, setExitDirection] = useState("left")
+
+  function handleConnect() {
+    setExitDirection("right")
+    setTimeout(() => setVisible(false), 10)
+  }
+
+  function handleSkip() {
+    setExitDirection("left")
+    setTimeout(() => setVisible(false), 10)
+  }
 
   return (
     <>
@@ -25,7 +38,23 @@ export default function Home() {
           </button>
         </div>
       ) : (
-        <ProfileCard />
+        <AnimatePresence>
+          {visible && (
+            <motion.div
+              key="profile-card"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{
+                x: exitDirection === "left" ? -500 : 500,
+                rotate: exitDirection === "left" ? -15 : 15,
+                opacity: 0,
+                transition: { duration: 0.3 },
+              }}
+            >
+              <ProfileCard onSkip={handleSkip} onConnect={handleConnect} />
+            </motion.div>
+          )}
+        </AnimatePresence>
       )}
     </>
   );
