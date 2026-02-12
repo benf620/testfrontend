@@ -4,11 +4,23 @@ import { useState, useEffect } from 'react';
 
 export default function Header() {
     const [isHovered, setIsHovered] = useState(false);
-    const [theme, setTheme] = useState(false)
+    const [theme, setTheme] = useState(() =>
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+    )
 
     useEffect(() => {
       document.documentElement.classList.toggle('dark', theme)
     }, [theme])
+
+    useEffect(() => {
+      const media = window.matchMedia("(prefers-color-scheme: dark)")
+      const listener = (e) => setTheme(e.matches)
+
+      setTheme(media.matches)
+      media.addEventListener("change", listener)
+
+      return () => media.removeEventListener("change", listener)
+    }, [])
 
     return (
       <div className='flex justify-between items-center bg-card/50 text-secondary-foreground border-b border-border p-4'>
