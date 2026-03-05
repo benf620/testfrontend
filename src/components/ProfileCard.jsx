@@ -1,21 +1,57 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function ProfileCard({ onSkip, onConnect }) {
-  const [isOpen, setIsOpen] = useState(false)
+// Helper to format profile data for display
+const formatProfile = (data, userType) => {
+  const birthYear = data.birthday ? new Date(data.birthday).getFullYear() : null;
+  const age = birthYear ? new Date().getFullYear() - birthYear : null;
 
-  const profile = {
-    name: "Max Mustermann",
-    birthYear: 2006,
-    age: 19,
-    email: "max.mustermann@telekom.de",
-    avatar: "https://i.pravatar.cc/150?img=12",
-    study: "Informatik",
-    location: "Winterfeldtstraße 21",
-    skills: ["React", "Next", "Tailwind"],
-    description:
-      "IT-Spezialist mit Fokus auf Softwareentwicklung, Systemadministration und Cloud-Lösungen. Leidenschaft für effiziente IT-Prozesse, Automatisierung und innovative Technologien. Erfahrung in Programmierung, Netzwerken und Support.",
+  if (userType === "BE") {
+    return {
+      uuid: data.uuid,
+      name: data.name,
+      birthYear,
+      age,
+      email: data.email,
+      avatar: data.pictureLink || "https://i.pravatar.cc/150?img=12",
+      study: data.bildungBetreuen?.join(", ") || "N/A",
+      location: data.officelokation?.join(", ") || "N/A",
+      skills: [],
+      bereich: data.bereich || "N/A",
+      teamDescription: data.teamDescription || "",
+      description: data.description || "No description available",
+    };
+  }
+
+  // NWKR
+  return {
+    uuid: data.uuid,
+    name: data.name,
+    birthYear,
+    age,
+    email: data.email,
+    avatar: data.pictureLink || "https://i.pravatar.cc/150?img=12",
+    study: data.bildungsgang?.join(", ") || "N/A",
+    location: data.officelokation?.join(", ") || "N/A",
+    skills: data.codinglanguages || [],
+    description: data.description || "No description available",
   };
+};
+
+export default function ProfileCard({ profile: rawProfile, userType, onSkip, onConnect, loading }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="max-w-md md:max-w-3xl p-5 md:p-10 border border-border rounded-2xl shadow-lg bg-card flex items-center justify-center min-h-[400px]">
+        <div className="text-lg text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!rawProfile) return null;
+
+  const profile = formatProfile(rawProfile, userType);
 
   return (
     <div className="max-w-md md:max-w-3xl md:min-h-[600px] lg:min-h-[700px] p-5 md:p-10 lg:p-12 border border-border rounded-2xl shadow-lg bg-card scale-90 sm:scale-100 origin-top w-full flex flex-col">
@@ -40,17 +76,24 @@ export default function ProfileCard({ onSkip, onConnect }) {
       {/* Grid für Details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8 text-sm mb-4 md:mb-10">
         <div className="md:space-y-1">
-          <span className="font-semibold">Studiengang</span>
+          <span className="font-semibold">{userType === "BE" ? "Bildung Betreuen" : "Studiengang"}</span>
           <div>{profile.study}</div>
         </div>
         <div className="md:space-y-1">
           <span className="font-semibold">Standort</span>
           <div>{profile.location}</div>
         </div>
-        <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
-          <span className="font-semibold">Programmiersprachen</span>
-          <div>{profile.skills.join(", ")}</div>
-        </div>
+        {userType === "BE" ? (
+          <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
+            <span className="font-semibold">Bereich</span>
+            <div>{profile.bereich}</div>
+          </div>
+        ) : (
+          <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
+            <span className="font-semibold">Programmiersprachen</span>
+            <div>{profile.skills.length > 0 ? profile.skills.join(", ") : "N/A"}</div>
+          </div>
+        )}
       </div>
 
       {/* Description */}
@@ -72,6 +115,12 @@ export default function ProfileCard({ onSkip, onConnect }) {
               className="overflow-hidden mt-1 md:mt-3 md:leading-relaxed"
             >
               {profile.description}
+              {userType === "BE" && profile.teamDescription && (
+                <div className="mt-3">
+                  <span className="font-semibold">Team: </span>
+                  {profile.teamDescription}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
