@@ -1,50 +1,40 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { matchApi } from "../services/api";
+import { getCurrentUser } from "../config/user";
 
 export default function Matches() {
+  const currentUser = getCurrentUser();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchMatches();
+    if (currentUser && currentUser.uuid) {
+      fetchMatches();
+    } else {
+      setLoading(false);
+      setError("Please create a profile first");
+    }
   }, []);
 
   const fetchMatches = async () => {
-    setLoading(true);
-    try {
-      // TODO: Backend needs to implement GET /api/matches endpoint
-      // For now, using mock data
-      // Expected endpoint: GET /api/matches?uuid=${currentUser.uuid}
-
-      // Mock data for demonstration
-      setMatches([
-        {
-          id: 1,
-          uuid: "BE-1",
-          name: "Anna Schmidt",
-          email: "anna.schmidt@telekom.de",
-          pictureLink: "https://i.pravatar.cc/150?img=5",
-          bereich: "IT Development",
-          description: "Experienced IT professional focusing on cloud solutions"
-        },
-        {
-          id: 2,
-          uuid: "BE-2",
-          name: "Thomas Müller",
-          email: "thomas.mueller@telekom.de",
-          pictureLink: "https://i.pravatar.cc/150?img=13",
-          bereich: "Network Infrastructure",
-          description: "Network specialist with focus on security"
-        }
-      ]);
-
-      setError("Note: Using mock data. Backend needs GET /api/matches endpoint");
+    if (!currentUser || !currentUser.uuid) {
+      setError("No user logged in");
       setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const matchData = await matchApi.getMatches(currentUser.uuid);
+      setMatches(matchData);
     } catch (err) {
       console.error("Error fetching matches:", err);
-      setError(err.message);
+      setError("Failed to load matches. Please try again later.");
+    } finally {
       setLoading(false);
     }
   };
@@ -84,7 +74,7 @@ export default function Matches() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {matches.map((match) => (
             <motion.div
-              key={match.uuid}
+              key={match.matchedUserUuid}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-card border border-border rounded-lg p-5 shadow-md hover:shadow-lg transition-shadow cursor-pointer"

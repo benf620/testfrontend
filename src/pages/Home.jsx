@@ -1,60 +1,66 @@
 import { useState, useEffect } from "react"
 import ProfileCard from "../components/ProfileCard"
 import { motion, AnimatePresence } from "framer-motion"
-import { businessExpertApi } from "../services/api"
-import { likeApi } from "../services/api"
-import { currentUser, getSwipeTargetType } from "../config/user"
+import { feedApi, likeApi } from "../services/api"
+import { getCurrentUser, getSwipeTargetType } from "../config/user"
 
 export default function Home() {
+  const currentUser = getCurrentUser()
   const [display, setDisplay] = useState(true)
   const [visible, setVisible] = useState(true)
   const [exitDirection, setExitDirection] = useState("left")
   const [currentProfile, setCurrentProfile] = useState(null)
-  const [currentProfileId, setCurrentProfileId] = useState(1)
+  const [feedProfiles, setFeedProfiles] = useState([])
+  const [feedIndex, setFeedIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [matchNotification, setMatchNotification] = useState(null)
+  const [error, setError] = useState(null)
 
-  // Fetch next profile
-  const fetchNextProfile = async () => {
+  // Fetch feed profiles
+  const fetchFeed = async () => {
+    if (!currentUser || !currentUser.uuid) {
+      setError("Please create a profile first in the Profile page")
+      setLoading(false)
+      return
+    }
     setLoading(true)
+    setError(null)
     try {
-      const targetType = getSwipeTargetType()
-      let profile = null
-
-      // Try to fetch the next profile by incrementing ID
-      // If it fails, try the next ID
-      for (let attempts = 0; attempts < 10; attempts++) {
-        try {
-          if (targetType === "BE") {
-            profile = await businessExpertApi.getById(currentProfileId + attempts)
-          }
-          if (profile) {
-            setCurrentProfileId(currentProfileId + attempts)
-            setCurrentProfile(profile)
-            break
-          }
-        } catch (err) {
-          // Profile not found, try next ID
-          continue
-        }
-      }
-
-      if (!profile) {
+      const profiles = await feedApi.getFeed(currentUser.uuid, 10)
+      setFeedProfiles(profiles)
+      setFeedIndex(0)
+      if (profiles && profiles.length > 0) {
+        setCurrentProfile(profiles[0])
+      } else {
         setCurrentProfile(null)
       }
     } catch (error) {
-      console.error("Error fetching profile:", error)
+      console.error("Error fetching feed:", error)
+      setError("Failed to load profiles. Please try again.")
       setCurrentProfile(null)
+      setFeedProfiles([])
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => {
-    if (!display && !currentProfile && !loading) {
-      fetchNextProfile()
+  // Load next profile from feed
+  const loadNextProfile = () => {
+    const nextIndex = feedIndex + 1
+    if (nextIndex < feedProfiles.length) {
+      setFeedIndex(nextIndex)
+      setCurrentProfile(feedProfiles[nextIndex])
+    } else {
+      // Feed exhausted, try to fetch more
+      setCurrentProfile(null)
     }
-  }, [display, currentProfile])
+  }
+
+  useEffect(() => {
+    if (!display && feedProfiles.length === 0 && !loading) {
+      fetchFeed()
+    }
+  }, [display])
 
   async function handleConnect() {
     setExitDirection("right")
@@ -81,8 +87,7 @@ export default function Home() {
     // Load next profile
     setTimeout(() => {
       setVisible(true)
-      setCurrentProfile(null)
-      setCurrentProfileId((prev) => prev + 1)
+      loadNextProfile()
     }, 300)
   }
 
@@ -93,9 +98,28 @@ export default function Home() {
     // Load next profile
     setTimeout(() => {
       setVisible(true)
-      setCurrentProfile(null)
-      setCurrentProfileId((prev) => prev + 1)
+      loadNextProfile()
     }, 300)
+  }
+
+  // Show error if no user logged in
+  if (!currentUser || !currentUser.uuid) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center max-w-md">
+          <div className="text-xl font-bold mb-4 text-primary">No Profile Found</div>
+          <div className="text-muted-foreground mb-6">
+            Please create your profile first to start swiping.
+          </div>
+          <a
+            href="/profile"
+            className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"
+          >
+            Create Profile
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -113,6 +137,13 @@ export default function Home() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Error message */}
+      {error && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-destructive/10 text-destructive px-6 py-3 rounded-lg border border-destructive/20 z-40">
+          {error}
+        </div>
+      )}
 
       {display ? (
         <div className="flex flex-col items-center text-center">
@@ -160,7 +191,8 @@ export default function Home() {
               <div className="text-xl mb-4">No more profiles available</div>
               <button
                 onClick={() => {
-                  setCurrentProfileId(1)
+                  setFeedProfiles([])
+                  setFeedIndex(0)
                   setDisplay(true)
                 }}
                 className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"

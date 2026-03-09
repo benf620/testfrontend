@@ -97,3 +97,19 @@ export const likeApi = {
     return handleResponse(response);
   },
 };
+
+// Matches endpoints
+export const matchApi = {
+  getMatches: async (uuid) => {
+    const response = await fetch(`${BASE_URL}/api/matches?uuid=${uuid}`);
+    return handleResponse(response);
+  },
+};
+
+// Feed endpoints
+export const feedApi = {
+  getFeed: async (uuid, limit = 10) => {
+    const response = await fetch(`${BASE_URL}/api/feed?uuid=${uuid}&limit=${limit}`);
+    return handleResponse(response);
+  },
+};

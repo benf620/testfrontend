@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
 import { nwkrApi, businessExpertApi } from "../services/api";
-import { currentUser } from "../config/user";
+import { getCurrentUser, setCurrentUser } from "../config/user";
 
 export default function Profile() {
-  const [userType, setUserType] = useState(currentUser.type);
+  const currentUser = getCurrentUser();
+  const [userType, setUserType] = useState(currentUser?.type || "NWKR");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
   const [nwkrForm, setNwkrForm] = useState({
-    id: currentUser.id,
-    uuid: currentUser.uuid,
+    id: currentUser?.id || null,
+    uuid: currentUser?.uuid || null,
     name: "",
     birthday: "",
     email: "",
@@ -23,8 +24,8 @@ export default function Profile() {
   });
 
   const [beForm, setBeForm] = useState({
-    id: currentUser.id,
-    uuid: currentUser.uuid,
+    id: currentUser?.id || null,
+    uuid: currentUser?.uuid || null,
     name: "",
     birthday: "",
     email: "",
@@ -44,21 +45,24 @@ export default function Profile() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      if (userType === "NWKR") {
-        const data = await nwkrApi.getById(currentUser.id);
-        if (data) {
-          setNwkrForm({
-            ...data,
-            birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
-          });
-        }
-      } else {
-        const data = await businessExpertApi.getById(currentUser.id);
-        if (data) {
-          setBeForm({
-            ...data,
-            birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
-          });
+      const user = getCurrentUser();
+      if (user && user.id) {
+        if (userType === "NWKR") {
+          const data = await nwkrApi.getById(user.id);
+          if (data) {
+            setNwkrForm({
+              ...data,
+              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
+            });
+          }
+        } else {
+          const data = await businessExpertApi.getById(user.id);
+          if (data) {
+            setBeForm({
+              ...data,
+              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
+            });
+          }
         }
       }
     } catch (error) {
@@ -69,13 +73,21 @@ export default function Profile() {
   };
 
   const handleNwkrChange = (e) => {
-    const { name, value, type, options } = e.target;
+    const { name, value, type, options, checked } = e.target;
 
     if (type === "select-multiple") {
       const values = Array.from(options)
         .filter((option) => option.selected)
         .map((option) => option.value);
       setNwkrForm((prev) => ({ ...prev, [name]: values }));
+    } else if (type === "checkbox" && name.endsWith("[]")) {
+      // Handle checkbox arrays
+      const fieldName = name.slice(0, -2);
+      const currentValues = nwkrForm[fieldName] || [];
+      const newValues = checked
+        ? [...currentValues, value]
+        : currentValues.filter((v) => v !== value);
+      setNwkrForm((prev) => ({ ...prev, [fieldName]: newValues }));
     } else {
       setNwkrForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -84,7 +96,15 @@ export default function Profile() {
   const handleBeChange = (e) => {
     const { name, value, type, options, checked } = e.target;
 
-    if (type === "checkbox") {
+    if (type === "checkbox" && name.endsWith("[]")) {
+      // Handle checkbox arrays
+      const fieldName = name.slice(0, -2);
+      const currentValues = beForm[fieldName] || [];
+      const newValues = checked
+        ? [...currentValues, value]
+        : currentValues.filter((v) => v !== value);
+      setBeForm((prev) => ({ ...prev, [fieldName]: newValues }));
+    } else if (type === "checkbox") {
       setBeForm((prev) => ({ ...prev, [name]: checked }));
     } else if (type === "select-multiple") {
       const values = Array.from(options)
@@ -112,8 +132,19 @@ export default function Profile() {
           await nwkrApi.update(dataToSend);
           setMessage({ type: "success", text: "Profile updated successfully!" });
         } else {
-          await nwkrApi.create(dataToSend);
-          setMessage({ type: "success", text: "Profile created successfully!" });
+          const createdUser = await nwkrApi.create(dataToSend);
+          // Save to localStorage
+          setCurrentUser({
+            uuid: createdUser.uuid,
+            id: createdUser.id,
+            type: "NWKR"
+          });
+          // Update form with returned data
+          setNwkrForm({
+            ...createdUser,
+            birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 16) : "",
+          });
+          setMessage({ type: "success", text: `Profile created successfully! Your ID is ${createdUser.uuid}` });
         }
       } else {
         const dataToSend = {
@@ -125,8 +156,19 @@ export default function Profile() {
           await businessExpertApi.update(beForm.id, dataToSend);
           setMessage({ type: "success", text: "Profile updated successfully!" });
         } else {
-          await businessExpertApi.create(dataToSend);
-          setMessage({ type: "success", text: "Profile created successfully!" });
+          const createdUser = await businessExpertApi.create(dataToSend);
+          // Save to localStorage
+          setCurrentUser({
+            uuid: createdUser.uuid,
+            id: createdUser.id,
+            type: "BE"
+          });
+          // Update form with returned data
+          setBeForm({
+            ...createdUser,
+            birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 16) : "",
+          });
+          setMessage({ type: "success", text: `Profile created successfully! Your ID is ${createdUser.uuid}` });
         }
       }
     } catch (error) {
@@ -249,36 +291,49 @@ export default function Profile() {
                 <h2 className="text-lg font-semibold">Education & Skills</h2>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Bildungsgang (Hold Ctrl/Cmd for multiple)</label>
-                  <select
-                    name="bildungsgang"
-                    multiple
-                    value={nwkrForm.bildungsgang}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
-                  >
-                    <option value="INFORMATIK">INFORMATIK</option>
-                    <option value="WIRTSCHFTSINFORMATIK">WIRTSCHFTSINFORMATIK</option>
-                  </select>
+                  <label className="block text-sm font-medium mb-2">Bildungsgang</label>
+                  <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
+                    {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
+                      <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          name="bildungsgang[]"
+                          value={option}
+                          checked={nwkrForm.bildungsgang.includes(option)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                        />
+                        <span className="text-sm">{option}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Coding Languages (Hold Ctrl/Cmd for multiple)</label>
-                  <select
-                    name="codinglanguages"
-                    multiple
-                    value={nwkrForm.codinglanguages}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
-                  >
-                    <option value="PYTHON">PYTHON</option>
-                    <option value="C">C</option>
-                    <option value="CPP">C++</option>
-                    <option value="JAVA">JAVA</option>
-                    <option value="JAVASCRIPT">JAVASCRIPT</option>
-                    <option value="ASM">Assembly</option>
-                    <option value="CSHARP">C#</option>
-                  </select>
+                  <label className="block text-sm font-medium mb-2">Programming Languages</label>
+                  <div className="grid grid-cols-2 gap-2 p-3 bg-background border border-border rounded-lg">
+                    {[
+                      { value: "PYTHON", label: "Python" },
+                      { value: "C", label: "C" },
+                      { value: "CPP", label: "C++" },
+                      { value: "JAVA", label: "Java" },
+                      { value: "JAVASCRIPT", label: "JavaScript" },
+                      { value: "ASM", label: "Assembly" },
+                      { value: "CSHARP", label: "C#" },
+                    ].map((option) => (
+                      <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          name="codinglanguages[]"
+                          value={option.value}
+                          checked={nwkrForm.codinglanguages.includes(option.value)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                        />
+                        <span className="text-sm">{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -321,17 +376,22 @@ export default function Profile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">Bildung Betreuen (Hold Ctrl/Cmd for multiple)</label>
-                  <select
-                    name="bildungBetreuen"
-                    multiple
-                    value={beForm.bildungBetreuen}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[80px]"
-                  >
-                    <option value="INFORMATIK">INFORMATIK</option>
-                    <option value="WIRTSCHFTSINFORMATIK">WIRTSCHFTSINFORMATIK</option>
-                  </select>
+                  <label className="block text-sm font-medium mb-2">Bildung Betreuen</label>
+                  <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
+                    {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
+                      <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                        <input
+                          type="checkbox"
+                          name="bildungBetreuen[]"
+                          value={option}
+                          checked={beForm.bildungBetreuen.includes(option)}
+                          onChange={handleChange}
+                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                        />
+                        <span className="text-sm">{option}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -352,16 +412,22 @@ export default function Profile() {
           {/* Common fields */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Office Location (Hold Ctrl/Cmd for multiple)</label>
-              <select
-                name="officelokation"
-                multiple
-                value={form.officelokation}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary min-h-[60px]"
-              >
-                <option value="WINTERFELDSTRASSE">WINTERFELDSTRASSE</option>
-              </select>
+              <label className="block text-sm font-medium mb-2">Office Location</label>
+              <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
+                {["WINTERFELDSTRASSE"].map((option) => (
+                  <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
+                    <input
+                      type="checkbox"
+                      name="officelokation[]"
+                      value={option}
+                      checked={form.officelokation.includes(option)}
+                      onChange={handleChange}
+                      className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                    />
+                    <span className="text-sm">{option}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             <div>
