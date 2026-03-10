@@ -1,26 +1,35 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { matchApi } from "../services/api";
-import { getCurrentUser } from "../config/user";
+import { useAuth } from "../context/AuthContext";
 
 export default function Matches() {
-  const currentUser = getCurrentUser();
+  const { user: authUser } = useAuth();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [error, setError] = useState(null);
 
+  // Get the user's UUID based on their profile
+  const getUserUuid = () => {
+    if (!authUser) return null;
+    const profileId = authUser.profileType === "NWKR" ? authUser.nwkrId : authUser.businessExpertId;
+    const prefix = authUser.profileType === "NWKR" ? "NWKR-" : "BE-";
+    return profileId ? `${prefix}${profileId}` : null;
+  };
+
   useEffect(() => {
-    if (currentUser && currentUser.uuid) {
-      fetchMatches();
+    const userUuid = getUserUuid();
+    if (userUuid) {
+      fetchMatches(userUuid);
     } else {
       setLoading(false);
       setError("Please create a profile first");
     }
-  }, []);
+  }, [authUser]);
 
-  const fetchMatches = async () => {
-    if (!currentUser || !currentUser.uuid) {
+  const fetchMatches = async (userUuid) => {
+    if (!userUuid) {
       setError("No user logged in");
       setLoading(false);
       return;
@@ -29,7 +38,7 @@ export default function Matches() {
     setLoading(true);
     setError(null);
     try {
-      const matchData = await matchApi.getMatches(currentUser.uuid);
+      const matchData = await matchApi.getMatches(userUuid);
       setMatches(matchData);
     } catch (err) {
       console.error("Error fetching matches:", err);

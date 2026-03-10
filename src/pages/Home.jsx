@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import ProfileCard from "../components/ProfileCard"
 import { motion, AnimatePresence } from "framer-motion"
 import { feedApi, likeApi } from "../services/api"
-import { getCurrentUser, getSwipeTargetType } from "../config/user"
+import { useAuth } from "../context/AuthContext"
 
 export default function Home() {
-  const currentUser = getCurrentUser()
+  const { user: authUser } = useAuth()
   const [display, setDisplay] = useState(true)
   const [visible, setVisible] = useState(true)
   const [exitDirection, setExitDirection] = useState("left")
@@ -16,9 +17,19 @@ export default function Home() {
   const [matchNotification, setMatchNotification] = useState(null)
   const [error, setError] = useState(null)
 
+  // Get the user's profile ID based on their type
+  const getUserUuid = () => {
+    if (!authUser) return null;
+    const profileId = authUser.profileType === "NWKR" ? authUser.nwkrId : authUser.businessExpertId;
+    const prefix = authUser.profileType === "NWKR" ? "NWKR-" : "BE-";
+    return profileId ? `${prefix}${profileId}` : null;
+  };
+
+  const currentUserUuid = getUserUuid();
+
   // Fetch feed profiles
   const fetchFeed = async () => {
-    if (!currentUser || !currentUser.uuid) {
+    if (!currentUserUuid) {
       setError("Please create a profile first in the Profile page")
       setLoading(false)
       return
@@ -26,7 +37,7 @@ export default function Home() {
     setLoading(true)
     setError(null)
     try {
-      const profiles = await feedApi.getFeed(currentUser.uuid, 10)
+      const profiles = await feedApi.getFeed(currentUserUuid, 10)
       setFeedProfiles(profiles)
       setFeedIndex(0)
       if (profiles && profiles.length > 0) {
@@ -68,11 +79,11 @@ export default function Home() {
 
     // Send like to backend
     try {
-      await likeApi.create(currentUser.uuid, currentProfile.uuid)
+      await likeApi.create(currentUserUuid, currentProfile.uuid)
 
       // Check if it's a match by seeing if the other person liked us back
       try {
-        const reciprocalLike = await likeApi.check(currentProfile.uuid, currentUser.uuid)
+        const reciprocalLike = await likeApi.check(currentProfile.uuid, currentUserUuid)
         if (reciprocalLike && reciprocalLike.id) {
           setMatchNotification("It's a Match! 🎉")
           setTimeout(() => setMatchNotification(null), 3000)
@@ -102,8 +113,8 @@ export default function Home() {
     }, 300)
   }
 
-  // Show error if no user logged in
-  if (!currentUser || !currentUser.uuid) {
+  // Show error if no user logged in or no profile created
+  if (!authUser || !currentUserUuid) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center max-w-md">
@@ -111,12 +122,12 @@ export default function Home() {
           <div className="text-muted-foreground mb-6">
             Please create your profile first to start swiping.
           </div>
-          <a
-            href="/profile"
+          <Link
+            to="/profile"
             className="inline-block bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"
           >
             Create Profile
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -179,7 +190,7 @@ export default function Home() {
             >
               <ProfileCard
                 profile={currentProfile}
-                userType={getSwipeTargetType()}
+                userType={authUser.profileType === "NWKR" ? "BE" : "NWKR"}
                 onSkip={handleSkip}
                 onConnect={handleConnect}
                 loading={loading}

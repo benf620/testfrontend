@@ -1,13 +1,13 @@
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaConnectdevelop } from "react-icons/fa6";
 import { useState, useEffect } from 'react';
-import { getCurrentUser, clearCurrentUser } from '../config/user';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
     const navigate = useNavigate();
+    const { user, isAuthenticated, logout } = useAuth();
     const [isHovered, setIsHovered] = useState(false);
-    const [currentUser, setCurrentUser] = useState(getCurrentUser());
     const [theme, setTheme] = useState(() =>
       window.matchMedia("(prefers-color-scheme: dark)").matches
     )
@@ -26,38 +26,29 @@ export default function Header() {
       return () => media.removeEventListener("change", listener)
     }, [])
 
-    // Update user state when localStorage changes
-    useEffect(() => {
-      const interval = setInterval(() => {
-        setCurrentUser(getCurrentUser());
-      }, 1000);
-      return () => clearInterval(interval);
-    }, []);
-
-    const handleLogout = () => {
+    const handleLogout = async () => {
       if (confirm('Are you sure you want to logout?')) {
-        clearCurrentUser();
-        setCurrentUser(null);
-        navigate('/profile');
+        await logout();
+        navigate('/login');
       }
     };
 
     return (
       <div className='flex justify-between items-center bg-card/50 text-secondary-foreground border-b border-border p-4'>
-        <div className='flex items-center'>
+        <Link to="/" className='flex items-center hover:opacity-80 transition cursor-pointer'>
           <FaConnectdevelop className='text-5xl mr-2 pt-2.5 text-primary'/>
           <div>
             <h1 className='text-xl font-bold'>ConnectToGrow</h1>
             <p className='text-xs text-muted-foreground'>Tool to connect to BE's</p>
           </div>
-        </div>
+        </Link>
         <div className="flex items-center gap-4">
           {/* User Info */}
-          {currentUser && currentUser.uuid && (
+          {isAuthenticated && user && (
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-sm font-medium">{currentUser.uuid}</div>
-                <div className="text-xs text-muted-foreground">{currentUser.type}</div>
+                <div className="text-sm font-medium">{user.email}</div>
+                <div className="text-xs text-muted-foreground">{user.profileType}</div>
               </div>
               <button
                 onClick={handleLogout}

@@ -1,20 +1,21 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { nwkrApi, businessExpertApi } from "../services/api";
-import { getCurrentUser, setCurrentUser } from "../config/user";
+import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
-  const currentUser = getCurrentUser();
-  const [userType, setUserType] = useState(currentUser?.type || "NWKR");
+  const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+  const [userType, setUserType] = useState(authUser?.profileType || "NWKR");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
   const [nwkrForm, setNwkrForm] = useState({
-    id: currentUser?.id || null,
-    uuid: currentUser?.uuid || null,
+    id: authUser?.nwkrId || null,
     name: "",
     birthday: "",
-    email: "",
+    email: authUser?.email || "",
     teamsLink: "",
     bildungsgang: [],
     officelokation: [],
@@ -24,11 +25,10 @@ export default function Profile() {
   });
 
   const [beForm, setBeForm] = useState({
-    id: currentUser?.id || null,
-    uuid: currentUser?.uuid || null,
+    id: authUser?.businessExpertId || null,
     name: "",
     birthday: "",
-    email: "",
+    email: authUser?.email || "",
     studied: false,
     bereich: "",
     officelokation: [],
@@ -39,28 +39,34 @@ export default function Profile() {
   });
 
   useEffect(() => {
+    if (authUser?.profileType) {
+      setUserType(authUser.profileType);
+    }
+  }, [authUser]);
+
+  useEffect(() => {
     fetchProfile();
   }, [userType]);
 
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const user = getCurrentUser();
-      if (user && user.id) {
+      const profileId = authUser?.nwkrId || authUser?.businessExpertId;
+      if (profileId) {
         if (userType === "NWKR") {
-          const data = await nwkrApi.getById(user.id);
+          const data = await nwkrApi.getById(profileId);
           if (data) {
             setNwkrForm({
               ...data,
-              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
+              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 10) : "",
             });
           }
         } else {
-          const data = await businessExpertApi.getById(user.id);
+          const data = await businessExpertApi.getById(profileId);
           if (data) {
             setBeForm({
               ...data,
-              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 16) : "",
+              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 10) : "",
             });
           }
         }
@@ -133,18 +139,18 @@ export default function Profile() {
           setMessage({ type: "success", text: "Profile updated successfully!" });
         } else {
           const createdUser = await nwkrApi.create(dataToSend);
-          // Save to localStorage
-          setCurrentUser({
-            uuid: createdUser.uuid,
-            id: createdUser.id,
-            type: "NWKR"
-          });
-          // Update form with returned data
-          setNwkrForm({
-            ...createdUser,
-            birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 16) : "",
-          });
-          setMessage({ type: "success", text: `Profile created successfully! Your ID is ${createdUser.uuid}` });
+          if (createdUser && createdUser.id) {
+            // Update form with returned data
+            setNwkrForm({
+              ...createdUser,
+              birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 10) : "",
+            });
+            setMessage({ type: "success", text: `Profile created successfully! Redirecting to home...` });
+            // Navigate to home after a short delay
+            setTimeout(() => navigate('/'), 1500);
+          } else {
+            setMessage({ type: "error", text: "Failed to create profile. Please try again." });
+          }
         }
       } else {
         const dataToSend = {
@@ -157,18 +163,18 @@ export default function Profile() {
           setMessage({ type: "success", text: "Profile updated successfully!" });
         } else {
           const createdUser = await businessExpertApi.create(dataToSend);
-          // Save to localStorage
-          setCurrentUser({
-            uuid: createdUser.uuid,
-            id: createdUser.id,
-            type: "BE"
-          });
-          // Update form with returned data
-          setBeForm({
-            ...createdUser,
-            birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 16) : "",
-          });
-          setMessage({ type: "success", text: `Profile created successfully! Your ID is ${createdUser.uuid}` });
+          if (createdUser && createdUser.id) {
+            // Update form with returned data
+            setBeForm({
+              ...createdUser,
+              birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 10) : "",
+            });
+            setMessage({ type: "success", text: `Profile created successfully! Redirecting to home...` });
+            // Navigate to home after a short delay
+            setTimeout(() => navigate('/'), 1500);
+          } else {
+            setMessage({ type: "error", text: "Failed to create profile. Please try again." });
+          }
         }
       }
     } catch (error) {
@@ -193,30 +199,11 @@ export default function Profile() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <div className="bg-card border border-border rounded-2xl shadow-lg p-6 md:p-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Your Profile</h1>
-
-        {/* User Type Selector */}
-        <div className="mb-6 flex gap-4">
-          <button
-            onClick={() => setUserType("NWKR")}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              userType === "NWKR"
-                ? "bg-primary text-white"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Network Member
-          </button>
-          <button
-            onClick={() => setUserType("BE")}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              userType === "BE"
-                ? "bg-primary text-white"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            Business Expert
-          </button>
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-primary">Your Profile</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Profile Type: {userType === "NWKR" ? "Nachwuchskraft (NwKR)" : "Business Expert (BE)"}
+          </p>
         </div>
 
         {message && (
@@ -252,7 +239,7 @@ export default function Profile() {
               <label className="block text-sm font-medium mb-1">Birthday</label>
               <input
                 name="birthday"
-                type="datetime-local"
+                type="date"
                 value={form.birthday}
                 onChange={handleChange}
                 className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"

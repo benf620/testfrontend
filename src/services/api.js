@@ -7,17 +7,33 @@ const handleResponse = async (response) => {
   }
 
   // Handle 204 No Content responses
-  if (response.status === 204 || response.status === 201) {
+  if (response.status === 204) {
     return null;
   }
 
-  return response.json();
+  // Try to get response text
+  const text = await response.text();
+
+  // If there's no content, return null
+  if (!text) {
+    return null;
+  }
+
+  // Try to parse as JSON
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.warn('Failed to parse response as JSON:', text);
+    return null;
+  }
 };
 
 // Network Members (NWKR) endpoints
 export const nwkrApi = {
   getById: async (id) => {
-    const response = await fetch(`${BASE_URL}/api/nwkr?id=${id}`);
+    const response = await fetch(`${BASE_URL}/api/nwkr?id=${id}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 
@@ -25,6 +41,7 @@ export const nwkrApi = {
     const response = await fetch(`${BASE_URL}/api/nwkr`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -34,6 +51,7 @@ export const nwkrApi = {
     const response = await fetch(`${BASE_URL}/api/nwkr`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -42,6 +60,7 @@ export const nwkrApi = {
   delete: async (id) => {
     const response = await fetch(`${BASE_URL}/api/nwkr?id=${id}`, {
       method: "DELETE",
+      credentials: 'include',
     });
     return handleResponse(response);
   },
@@ -50,7 +69,9 @@ export const nwkrApi = {
 // Business Experts endpoints
 export const businessExpertApi = {
   getById: async (id) => {
-    const response = await fetch(`${BASE_URL}/api/business-expert?id=${id}`);
+    const response = await fetch(`${BASE_URL}/api/business-expert?id=${id}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 
@@ -58,6 +79,7 @@ export const businessExpertApi = {
     const response = await fetch(`${BASE_URL}/api/business-expert`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -67,6 +89,7 @@ export const businessExpertApi = {
     const response = await fetch(`${BASE_URL}/api/business-expert?id=${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
+      credentials: 'include',
       body: JSON.stringify(data),
     });
     return handleResponse(response);
@@ -75,6 +98,7 @@ export const businessExpertApi = {
   delete: async (id) => {
     const response = await fetch(`${BASE_URL}/api/business-expert?id=${id}`, {
       method: "DELETE",
+      credentials: 'include',
     });
     return handleResponse(response);
   },
@@ -84,7 +108,8 @@ export const businessExpertApi = {
 export const likeApi = {
   check: async (likerUuid, likedUuid) => {
     const response = await fetch(
-      `${BASE_URL}/api/like?liker=${likerUuid}&liked=${likedUuid}`
+      `${BASE_URL}/api/like?liker=${likerUuid}&liked=${likedUuid}`,
+      { credentials: 'include' }
     );
     return handleResponse(response);
   },
@@ -92,7 +117,10 @@ export const likeApi = {
   create: async (likerUuid, likedUuid) => {
     const response = await fetch(
       `${BASE_URL}/api/like?likerUuid=${likerUuid}&likedUuid=${likedUuid}`,
-      { method: "POST" }
+      {
+        method: "POST",
+        credentials: 'include'
+      }
     );
     return handleResponse(response);
   },
@@ -101,7 +129,9 @@ export const likeApi = {
 // Matches endpoints
 export const matchApi = {
   getMatches: async (uuid) => {
-    const response = await fetch(`${BASE_URL}/api/matches?uuid=${uuid}`);
+    const response = await fetch(`${BASE_URL}/api/matches?uuid=${uuid}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 };
@@ -109,7 +139,9 @@ export const matchApi = {
 // Feed endpoints
 export const feedApi = {
   getFeed: async (uuid, limit = 10) => {
-    const response = await fetch(`${BASE_URL}/api/feed?uuid=${uuid}&limit=${limit}`);
+    const response = await fetch(`${BASE_URL}/api/feed?uuid=${uuid}&limit=${limit}`, {
+      credentials: 'include',
+    });
     return handleResponse(response);
   },
 };
