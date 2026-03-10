@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import ProfileCard from "../components/ProfileCard"
 import { motion, AnimatePresence } from "framer-motion"
-import { feedApi, likeApi } from "../services/api"
+import { feedApi, likeApi, nwkrApi, businessExpertApi } from "../services/api"
 import { useAuth } from "../context/AuthContext"
 
 export default function Home() {
+  const navigate = useNavigate()
   const { user: authUser } = useAuth()
   const [display, setDisplay] = useState(true)
   const [visible, setVisible] = useState(true)
@@ -16,6 +17,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [matchNotification, setMatchNotification] = useState(null)
   const [error, setError] = useState(null)
+  const [checkingProfile, setCheckingProfile] = useState(true)
 
   // Get the user's profile ID based on their type
   const getUserUuid = () => {
@@ -26,6 +28,52 @@ export default function Home() {
   };
 
   const currentUserUuid = getUserUuid();
+
+  // Check if user has completed their profile before allowing access
+  useEffect(() => {
+    const checkUserProfile = async () => {
+      if (!authUser) {
+        setCheckingProfile(false);
+        return;
+      }
+
+      try {
+        const profileId = authUser.profileType === "NWKR" ? authUser.nwkrId : authUser.businessExpertId;
+        if (!profileId) {
+          // No profile exists, redirect to create one
+          navigate('/profile', {
+            state: { message: 'Please create your profile to start matching' }
+          });
+          return;
+        }
+
+        // Fetch the user's profile to check if it's complete
+        let profile;
+        if (authUser.profileType === "NWKR") {
+          profile = await nwkrApi.getById(profileId);
+        } else {
+          profile = await businessExpertApi.getById(profileId);
+        }
+
+        // Check if profile has basic required fields filled (name is mandatory)
+        if (!profile || !profile.name || profile.name.trim() === '') {
+          // Profile incomplete, redirect to profile page
+          navigate('/profile', {
+            state: { message: 'Please complete your profile before matching with others' }
+          });
+          return;
+        }
+
+        // Profile is complete, allow access
+        setCheckingProfile(false);
+      } catch (err) {
+        console.error('Error checking profile:', err);
+        setCheckingProfile(false);
+      }
+    };
+
+    checkUserProfile();
+  }, [authUser, navigate]);
 
   // Fetch feed profiles
   const fetchFeed = async () => {
@@ -111,6 +159,15 @@ export default function Home() {
       setVisible(true)
       loadNextProfile()
     }, 300)
+  }
+
+  // Show loading while checking profile
+  if (checkingProfile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-lg text-muted-foreground">Checking your profile...</div>
+      </div>
+    )
   }
 
   // Show error if no user logged in or no profile created

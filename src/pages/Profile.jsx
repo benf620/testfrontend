@@ -1,15 +1,25 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { nwkrApi, businessExpertApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: authUser } = useAuth();
   const [userType, setUserType] = useState(authUser?.profileType || "NWKR");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
+
+  // Show message if redirected from another page
+  useEffect(() => {
+    if (location.state?.message) {
+      setMessage({ type: "info", text: location.state.message });
+      // Clear the state after showing the message
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const [nwkrForm, setNwkrForm] = useState({
     id: authUser?.nwkrId || null,
@@ -211,6 +221,8 @@ export default function Profile() {
             className={`mb-4 p-3 rounded-lg ${
               message.type === "success"
                 ? "bg-primary/10 text-primary border border-primary/20"
+                : message.type === "info"
+                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
                 : "bg-destructive/10 text-destructive border border-destructive/20"
             }`}
           >

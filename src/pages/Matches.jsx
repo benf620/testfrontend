@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { matchApi } from "../services/api";
+import { useNavigate } from "react-router-dom";
+import { matchApi, nwkrApi, businessExpertApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Matches() {
+  const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState(null);
   const [error, setError] = useState(null);
+  const [checkingProfile, setCheckingProfile] = useState(true);
 
   // Get the user's UUID based on their profile
   const getUserUuid = () => {
@@ -18,15 +21,53 @@ export default function Matches() {
     return profileId ? `${prefix}${profileId}` : null;
   };
 
+  // Check if user has completed their profile before allowing access
   useEffect(() => {
-    const userUuid = getUserUuid();
-    if (userUuid) {
-      fetchMatches(userUuid);
-    } else {
-      setLoading(false);
-      setError("Please create a profile first");
-    }
-  }, [authUser]);
+    const checkUserProfile = async () => {
+      if (!authUser) {
+        setCheckingProfile(false);
+        return;
+      }
+
+      try {
+        const profileId = authUser.profileType === "NWKR" ? authUser.nwkrId : authUser.businessExpertId;
+        if (!profileId) {
+          navigate('/profile', {
+            state: { message: 'Please create your profile to view matches' }
+          });
+          return;
+        }
+
+        // Fetch the user's profile to check if it's complete
+        let profile;
+        if (authUser.profileType === "NWKR") {
+          profile = await nwkrApi.getById(profileId);
+        } else {
+          profile = await businessExpertApi.getById(profileId);
+        }
+
+        // Check if profile has basic required fields filled (name is mandatory)
+        if (!profile || !profile.name || profile.name.trim() === '') {
+          navigate('/profile', {
+            state: { message: 'Please complete your profile before viewing matches' }
+          });
+          return;
+        }
+
+        // Profile is complete, fetch matches
+        setCheckingProfile(false);
+        const userUuid = getUserUuid();
+        if (userUuid) {
+          fetchMatches(userUuid);
+        }
+      } catch (err) {
+        console.error('Error checking profile:', err);
+        setCheckingProfile(false);
+      }
+    };
+
+    checkUserProfile();
+  }, [authUser, navigate]);
 
   const fetchMatches = async (userUuid) => {
     if (!userUuid) {
@@ -55,6 +96,14 @@ export default function Matches() {
   const closeMatchDetails = () => {
     setSelectedMatch(null);
   };
+
+  if (checkingProfile) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-lg text-muted-foreground">Checking your profile...</div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
