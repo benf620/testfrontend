@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { nwkrApi, businessExpertApi } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+
+const BILDUNGSGANG_OPTIONS = ["INFORMATIK", "WIRTSCHFTSINFORMATIK"];
+const OFFICE_OPTIONS = ["WINTERFELDSTRASSE"];
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -12,11 +15,16 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  // Show message if redirected from another page
+  // ── Bild-State ──────────────────────────────────────────────────
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isDropZoneDragging, setIsDropZoneDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  // ────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (location.state?.message) {
       setMessage({ type: "info", text: location.state.message });
-      // Clear the state after showing the message
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -26,9 +34,8 @@ export default function Profile() {
     name: "",
     birthday: "",
     email: authUser?.email || "",
-    teamsLink: "",
-    bildungsgang: [],
-    officelokation: [],
+    bildungsgang: "",
+    officelokation: "",
     pictureLink: "",
     codinglanguages: [],
     description: "",
@@ -39,9 +46,7 @@ export default function Profile() {
     name: "",
     birthday: "",
     email: authUser?.email || "",
-    studied: false,
-    bereich: "",
-    officelokation: [],
+    officelokation: "",
     pictureLink: "",
     bildungBetreuen: [],
     teamDescription: "",
@@ -68,16 +73,36 @@ export default function Profile() {
           if (data) {
             setNwkrForm({
               ...data,
-              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 10) : "",
+              birthday: data.birthday
+                  ? new Date(data.birthday).toISOString().slice(0, 10)
+                  : "",
+              bildungsgang: Array.isArray(data.bildungsgang)
+                  ? data.bildungsgang[0] ?? ""
+                  : data.bildungsgang ?? "",
+              officelokation: Array.isArray(data.officelokation)
+                  ? data.officelokation[0] ?? ""
+                  : data.officelokation ?? "",
             });
+            if (data.pictureLink) setImagePreview(data.pictureLink);
           }
         } else {
           const data = await businessExpertApi.getById(profileId);
           if (data) {
             setBeForm({
               ...data,
-              birthday: data.birthday ? new Date(data.birthday).toISOString().slice(0, 10) : "",
+              birthday: data.birthday
+                  ? new Date(data.birthday).toISOString().slice(0, 10)
+                  : "",
+              officelokation: Array.isArray(data.officelokation)
+                  ? data.officelokation[0] ?? ""
+                  : data.officelokation ?? "",
+              bildungBetreuen: Array.isArray(data.bildungBetreuen)
+                  ? data.bildungBetreuen
+                  : data.bildungBetreuen
+                      ? [data.bildungBetreuen]
+                      : [],
             });
+            if (data.pictureLink) setImagePreview(data.pictureLink);
           }
         }
       }
@@ -88,49 +113,66 @@ export default function Profile() {
     }
   };
 
-  const handleNwkrChange = (e) => {
-    const { name, value, type, options, checked } = e.target;
+  // ── Bild-Handling ────────────────────────────────────────────────
+  const handleFile = useCallback((file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }, []);
 
+  const onDrop = useCallback(
+      (e) => {
+        e.preventDefault();
+        setIsDropZoneDragging(false);
+        handleFile(e.dataTransfer.files?.[0]);
+      },
+      [handleFile]
+  );
+
+  const onDragOver = (e) => {
+    e.preventDefault();
+    setIsDropZoneDragging(true);
+  };
+
+  const onDragLeave = () => setIsDropZoneDragging(false);
+
+  const onFileInputChange = (e) => handleFile(e.target.files?.[0]);
+
+  const clearImage = (e) => {
+    e.stopPropagation();
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    setNwkrForm((prev) => ({ ...prev, pictureLink: "" }));
+    setBeForm((prev) => ({ ...prev, pictureLink: "" }));
+  };
+  // ────────────────────────────────────────────────────────────────
+
+  const handleNwkrChange = (e) => {
+    const { name, value, type, options } = e.target;
     if (type === "select-multiple") {
       const values = Array.from(options)
-        .filter((option) => option.selected)
-        .map((option) => option.value);
+          .filter((o) => o.selected)
+          .map((o) => o.value);
       setNwkrForm((prev) => ({ ...prev, [name]: values }));
-    } else if (type === "checkbox" && name.endsWith("[]")) {
-      // Handle checkbox arrays
-      const fieldName = name.slice(0, -2);
-      const currentValues = nwkrForm[fieldName] || [];
-      const newValues = checked
-        ? [...currentValues, value]
-        : currentValues.filter((v) => v !== value);
-      setNwkrForm((prev) => ({ ...prev, [fieldName]: newValues }));
     } else {
       setNwkrForm((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleBeChange = (e) => {
-    const { name, value, type, options, checked } = e.target;
-
-    if (type === "checkbox" && name.endsWith("[]")) {
-      // Handle checkbox arrays
-      const fieldName = name.slice(0, -2);
-      const currentValues = beForm[fieldName] || [];
-      const newValues = checked
-        ? [...currentValues, value]
-        : currentValues.filter((v) => v !== value);
-      setBeForm((prev) => ({ ...prev, [fieldName]: newValues }));
-    } else if (type === "checkbox") {
-      setBeForm((prev) => ({ ...prev, [name]: checked }));
-    } else if (type === "select-multiple") {
+    const { name, value, type, options } = e.target;
+    if (type === "select-multiple") {
       const values = Array.from(options)
-        .filter((option) => option.selected)
-        .map((option) => option.value);
+          .filter((o) => o.selected)
+          .map((o) => o.value);
       setBeForm((prev) => ({ ...prev, [name]: values }));
     } else {
       setBeForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  const normalizeOfficelokation = (value) => (value ? [value] : []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -139,57 +181,123 @@ export default function Profile() {
 
     try {
       if (userType === "NWKR") {
-        const dataToSend = {
+        let response;
+        const nwkrPayload = {
           ...nwkrForm,
-          birthday: nwkrForm.birthday ? new Date(nwkrForm.birthday).toISOString() : null,
+          birthday: nwkrForm.birthday
+              ? new Date(nwkrForm.birthday).toISOString()
+              : null,
+          officelokation: normalizeOfficelokation(nwkrForm.officelokation),
+          bildungsgang: nwkrForm.bildungsgang ? [nwkrForm.bildungsgang] : [],
         };
+
+        if (imageFile) {
+          const formData = new FormData();
+          const jsonBlob = new Blob([JSON.stringify(nwkrPayload)], {
+            type: "application/json",
+          });
+          formData.append("data", jsonBlob);
+          formData.append("picture", imageFile);
+          response = nwkrForm.id
+              ? await nwkrApi.updateWithImage(nwkrForm.id, formData)
+              : await nwkrApi.createWithImage(formData);
+        } else {
+          response = nwkrForm.id
+              ? await nwkrApi.update(nwkrPayload)
+              : await nwkrApi.create(nwkrPayload);
+        }
 
         if (nwkrForm.id) {
-          await nwkrApi.update(dataToSend);
           setMessage({ type: "success", text: "Profile updated successfully!" });
+          setTimeout(() => navigate("/"), 1000);
+        } else if (response?.id) {
+          setNwkrForm({
+            ...response,
+            birthday: response.birthday
+                ? new Date(response.birthday).toISOString().slice(0, 10)
+                : "",
+            bildungsgang: Array.isArray(response.bildungsgang)
+                ? response.bildungsgang[0] ?? ""
+                : response.bildungsgang ?? "",
+            officelokation: Array.isArray(response.officelokation)
+                ? response.officelokation[0] ?? ""
+                : response.officelokation ?? "",
+          });
+          if (response.pictureLink) setImagePreview(response.pictureLink);
+          setImageFile(null);
+          setMessage({
+            type: "success",
+            text: "Profile created successfully! Redirecting to home...",
+          });
+          setTimeout(() => navigate("/"), 1500);
         } else {
-          const createdUser = await nwkrApi.create(dataToSend);
-          if (createdUser && createdUser.id) {
-            // Update form with returned data
-            setNwkrForm({
-              ...createdUser,
-              birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 10) : "",
-            });
-            setMessage({ type: "success", text: `Profile created successfully! Redirecting to home...` });
-            // Navigate to home after a short delay
-            setTimeout(() => navigate('/'), 1500);
-          } else {
-            setMessage({ type: "error", text: "Failed to create profile. Please try again." });
-          }
+          setMessage({
+            type: "error",
+            text: "Failed to create profile. Please try again.",
+          });
         }
       } else {
-        const dataToSend = {
+        let response;
+        const bePayload = {
           ...beForm,
-          birthday: beForm.birthday ? new Date(beForm.birthday).toISOString() : null,
+          birthday: beForm.birthday
+              ? new Date(beForm.birthday).toISOString()
+              : null,
+          officelokation: normalizeOfficelokation(beForm.officelokation),
         };
 
-        if (beForm.id) {
-          await businessExpertApi.update(beForm.id, dataToSend);
-          setMessage({ type: "success", text: "Profile updated successfully!" });
+        if (imageFile) {
+          const formData = new FormData();
+          const jsonBlob = new Blob([JSON.stringify(bePayload)], {
+            type: "application/json",
+          });
+          formData.append("data", jsonBlob);
+          formData.append("picture", imageFile);
+          response = beForm.id
+              ? await businessExpertApi.updateWithImage(beForm.id, formData)
+              : await businessExpertApi.createWithImage(formData);
         } else {
-          const createdUser = await businessExpertApi.create(dataToSend);
-          if (createdUser && createdUser.id) {
-            // Update form with returned data
-            setBeForm({
-              ...createdUser,
-              birthday: createdUser.birthday ? new Date(createdUser.birthday).toISOString().slice(0, 10) : "",
-            });
-            setMessage({ type: "success", text: `Profile created successfully! Redirecting to home...` });
-            // Navigate to home after a short delay
-            setTimeout(() => navigate('/'), 1500);
-          } else {
-            setMessage({ type: "error", text: "Failed to create profile. Please try again." });
-          }
+          response = beForm.id
+              ? await businessExpertApi.update(beForm.id, bePayload)
+              : await businessExpertApi.create(bePayload);
+        }
+
+        if (beForm.id) {
+          setMessage({ type: "success", text: "Profile updated successfully!" });
+          setTimeout(() => navigate("/"), 1000);
+        } else if (response?.id) {
+          setBeForm({
+            ...response,
+            birthday: response.birthday
+                ? new Date(response.birthday).toISOString().slice(0, 10)
+                : "",
+            officelokation: Array.isArray(response.officelokation)
+                ? response.officelokation[0] ?? ""
+                : response.officelokation ?? "",
+            bildungBetreuen: Array.isArray(response.bildungBetreuen)
+                ? response.bildungBetreuen
+                : [],
+          });
+          if (response.pictureLink) setImagePreview(response.pictureLink);
+          setImageFile(null);
+          setMessage({
+            type: "success",
+            text: "Profile created successfully! Redirecting to home...",
+          });
+          setTimeout(() => navigate("/"), 1500);
+        } else {
+          setMessage({
+            type: "error",
+            text: "Failed to create profile. Please try again.",
+          });
         }
       }
     } catch (error) {
       console.error("Error saving profile:", error);
-      setMessage({ type: "error", text: "Failed to save profile. Please try again." });
+      setMessage({
+        type: "error",
+        text: "Failed to save profile. Please try again.",
+      });
     } finally {
       setSaving(false);
     }
@@ -197,260 +305,291 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-lg text-muted-foreground">Loading profile...</div>
-      </div>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-lg text-muted-foreground">Loading profile...</div>
+        </div>
     );
   }
 
   const form = userType === "NWKR" ? nwkrForm : beForm;
   const handleChange = userType === "NWKR" ? handleNwkrChange : handleBeChange;
+  const selectClass =
+      "w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="bg-card border border-border rounded-2xl shadow-lg p-6 md:p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-primary">Your Profile</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Profile Type: {userType === "NWKR" ? "Nachwuchskraft (NwKR)" : "Business Expert (BE)"}
-          </p>
-        </div>
-
-        {message && (
-          <div
-            className={`mb-4 p-3 rounded-lg ${
-              message.type === "success"
-                ? "bg-primary/10 text-primary border border-primary/20"
-                : message.type === "info"
-                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
-                : "bg-destructive/10 text-destructive border border-destructive/20"
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Basic Information</h2>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                name="name"
-                placeholder="Full Name"
-                value={form.name}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Birthday</label>
-              <input
-                name="birthday"
-                type="date"
-                value={form.birthday}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
-              <input
-                name="email"
-                type="email"
-                placeholder="email@telekom.de"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Picture URL</label>
-              <input
-                name="pictureLink"
-                placeholder="https://example.com/picture.jpg"
-                value={form.pictureLink}
-                onChange={handleChange}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="bg-card border border-border rounded-2xl shadow-lg p-6 md:p-8">
+          <div className="mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-primary">
+              Your Profile
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Profile Type:{" "}
+              {userType === "NWKR"
+                  ? "Nachwuchskraft (NwKR)"
+                  : "Business Expert (BE)"}
+            </p>
           </div>
 
-          {/* Type-specific fields */}
-          {userType === "NWKR" ? (
-            <>
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Education & Skills</h2>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Bildungsgang</label>
-                  <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
-                    {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          name="bildungsgang[]"
-                          value={option}
-                          checked={nwkrForm.bildungsgang.includes(option)}
-                          onChange={handleChange}
-                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
-                        />
-                        <span className="text-sm">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Programming Languages</label>
-                  <div className="grid grid-cols-2 gap-2 p-3 bg-background border border-border rounded-lg">
-                    {[
-                      { value: "PYTHON", label: "Python" },
-                      { value: "C", label: "C" },
-                      { value: "CPP", label: "C++" },
-                      { value: "JAVA", label: "Java" },
-                      { value: "JAVASCRIPT", label: "JavaScript" },
-                      { value: "ASM", label: "Assembly" },
-                      { value: "CSHARP", label: "C#" },
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          name="codinglanguages[]"
-                          value={option.value}
-                          checked={nwkrForm.codinglanguages.includes(option.value)}
-                          onChange={handleChange}
-                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
-                        />
-                        <span className="text-sm">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Teams Link</label>
-                  <input
-                    name="teamsLink"
-                    placeholder="Teams meeting/chat link"
-                    value={nwkrForm.teamsLink}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
+          {message && (
+              <div
+                  className={`mb-4 p-3 rounded-lg ${
+                      message.type === "success"
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : message.type === "info"
+                              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                              : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+              >
+                {message.text}
               </div>
-            </>
-          ) : (
-            <>
-              <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Professional Information</h2>
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    name="studied"
-                    checked={beForm.studied}
-                    onChange={handleChange}
-                    className="w-5 h-5 text-primary rounded focus:ring-2 focus:ring-primary"
-                  />
-                  <label className="text-sm font-medium">Studied</label>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bereich</label>
-                  <input
-                    name="bereich"
-                    placeholder="Your area of expertise"
-                    value={beForm.bereich}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Bildung Betreuen</label>
-                  <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
-                    {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
-                      <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                        <input
-                          type="checkbox"
-                          name="bildungBetreuen[]"
-                          value={option}
-                          checked={beForm.bildungBetreuen.includes(option)}
-                          onChange={handleChange}
-                          className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
-                        />
-                        <span className="text-sm">{option}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Team Description</label>
-                  <textarea
-                    name="teamDescription"
-                    placeholder="Describe your team"
-                    value={beForm.teamDescription}
-                    onChange={handleChange}
-                    rows={3}
-                    className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-                  />
-                </div>
-              </div>
-            </>
           )}
 
-          {/* Common fields */}
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Office Location</label>
-              <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
-                {["WINTERFELDSTRASSE"].map((option) => (
-                  <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded">
-                    <input
-                      type="checkbox"
-                      name="officelokation[]"
-                      value={option}
-                      checked={form.officelokation.includes(option)}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* ── Basic Information ── */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Basic Information</h2>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Name</label>
+                <input
+                    name="name"
+                    placeholder="Full Name"
+                    value={form.name}
+                    onChange={handleChange}
+                    required
+                    className={selectClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Birthday</label>
+                <input
+                    name="birthday"
+                    type="date"
+                    value={form.birthday}
+                    onChange={handleChange}
+                    className={selectClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <input
+                    name="email"
+                    type="email"
+                    placeholder="email@telekom.de"
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                    className={selectClass}
+                />
+              </div>
+
+              {/* ── Profilbild ── */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Profile Picture
+                </label>
+
+                {imagePreview ? (
+                    <div className="flex flex-col items-start gap-3">
+                      {/* Statische kreisförmige Vorschau */}
+                      <div
+                          className="rounded-full overflow-hidden border-3 border-primary shadow-lg bg-muted flex-shrink-0"
+                          style={{ width: 190, height: 190 }}
+                      >
+                        <img
+                            src={imagePreview}
+                            alt="Profile preview"
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition"
+                        >
+                          Replace
+                        </button>
+                        <button
+                            type="button"
+                            onClick={clearImage}
+                            className="text-sm px-3 py-1.5 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 transition"
+                        >
+                          ✕ Remove
+                        </button>
+                      </div>
+                    </div>
+                ) : (
+                    <div
+                        onClick={() => fileInputRef.current?.click()}
+                        onDrop={onDrop}
+                        onDragOver={onDragOver}
+                        onDragLeave={onDragLeave}
+                        className={`relative w-full rounded-lg border-2 border-dashed transition-colors cursor-pointer
+                    focus-within:ring-2 focus-within:ring-primary
+                    ${
+                            isDropZoneDragging
+                                ? "border-primary bg-primary/10"
+                                : "border-border bg-background hover:border-primary/60"
+                        }`}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-8 h-8 text-muted-foreground"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={1.5}
+                        >
+                          <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
+                          />
+                        </svg>
+                        <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-foreground">
+                        Drop image here
+                      </span>{" "}
+                          or click to select
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          PNG, JPG, GIF, WEBP up to 10 MB
+                        </p>
+                      </div>
+                    </div>
+                )}
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={onFileInputChange}
+                    className="sr-only"
+                />
+              </div>
+              {/* ── Ende Profilbild ── */}
+            </div>
+
+            {/* ── Type-specific fields ── */}
+            {userType === "NWKR" ? (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Education & Skills</h2>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Educational Course
+                    </label>
+                    <select
+                        name="bildungsgang"
+                        value={nwkrForm.bildungsgang}
+                        onChange={handleNwkrChange}
+                        className={selectClass}
+                    >
+                      <option value="">— Please select —</option>
+                      {BILDUNGSGANG_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Professional Information</h2>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Searching for Educational Course
+                    </label>
+                    <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
+                      {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
+                          <label
+                              key={option}
+                              className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 p-2 rounded"
+                          >
+                            <input
+                                type="checkbox"
+                                name="bildungsgang[]"
+                                value={option}
+                                checked={nwkrForm.bildungsgang.includes(option)}
+                                onChange={handleChange}
+                                className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                            />
+                            <span className="text-sm">{option}</span>
+                          </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">
+                      Work Area
+                    </label>
+                    <textarea
+                        name="teamDescription"
+                        placeholder="Describe your team"
+                        value={beForm.teamDescription}
+                        onChange={handleBeChange}
+                        rows={3}
+                        className={`${selectClass} resize-none`}
                     />
-                    <span className="text-sm">{option}</span>
-                  </label>
-                ))}
+                  </div>
+                </div>
+            )}
+
+            {/* ── Common fields ── */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Office Location
+                </label>
+                <select
+                    name="officelokation"
+                    value={form.officelokation}
+                    onChange={handleChange}
+                    className={selectClass}
+                >
+                  <option value="">— Please select —</option>
+                  {OFFICE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Description
+                </label>
+                <textarea
+                    name="description"
+                    placeholder="Tell others about yourself"
+                    value={form.description}
+                    onChange={handleChange}
+                    rows={5}
+                    className={`${selectClass} resize-none`}
+                />
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Description</label>
-              <textarea
-                name="description"
-                placeholder="Tell others about yourself"
-                value={form.description}
-                onChange={handleChange}
-                rows={5}
-                className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? "Saving..." : "Save Profile"}
-          </button>
-        </form>
+            <button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? "Saving..." : "Save Profile"}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
   );
 }

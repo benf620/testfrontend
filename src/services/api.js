@@ -6,20 +6,16 @@ const handleResponse = async (response) => {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
 
-  // Handle 204 No Content responses
   if (response.status === 204) {
     return null;
   }
 
-  // Try to get response text
   const text = await response.text();
 
-  // If there's no content, return null
   if (!text) {
     return null;
   }
 
-  // Try to parse as JSON
   try {
     return JSON.parse(text);
   } catch (e) {
@@ -47,12 +43,34 @@ export const nwkrApi = {
     return handleResponse(response);
   },
 
+  // NEU: create mit Bild (multipart/form-data)
+  createWithImage: async (formData) => {
+    const response = await fetch(`${BASE_URL}/api/nwkr/upload`, {
+      method: "POST",
+      credentials: 'include',
+      body: formData,
+      // KEIN Content-Type Header – Browser setzt multipart boundary automatisch
+    });
+    return handleResponse(response);
+  },
+
   update: async (data) => {
     const response = await fetch(`${BASE_URL}/api/nwkr`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: 'include',
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  // NEU: update mit Bild (multipart/form-data)
+  updateWithImage: async (id, formData) => {
+    const response = await fetch(`${BASE_URL}/api/nwkr/upload?id=${id}`, {
+      method: "PATCH",
+      credentials: 'include',
+      body: formData,
+      // KEIN Content-Type Header
     });
     return handleResponse(response);
   },
@@ -85,12 +103,32 @@ export const businessExpertApi = {
     return handleResponse(response);
   },
 
+  // NEU: create mit Bild (multipart/form-data)
+  createWithImage: async (formData) => {
+    const response = await fetch(`${BASE_URL}/api/business-expert/upload`, {
+      method: "POST",
+      credentials: 'include',
+      body: formData,
+    });
+    return handleResponse(response);
+  },
+
   update: async (id, data) => {
     const response = await fetch(`${BASE_URL}/api/business-expert?id=${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       credentials: 'include',
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  // NEU: update mit Bild (multipart/form-data)
+  updateWithImage: async (id, formData) => {
+    const response = await fetch(`${BASE_URL}/api/business-expert/upload?id=${id}`, {
+      method: "PATCH",
+      credentials: 'include',
+      body: formData,
     });
     return handleResponse(response);
   },
@@ -108,19 +146,19 @@ export const businessExpertApi = {
 export const likeApi = {
   check: async (likerUuid, likedUuid) => {
     const response = await fetch(
-      `${BASE_URL}/api/like?liker=${likerUuid}&liked=${likedUuid}`,
-      { credentials: 'include' }
+        `${BASE_URL}/api/like?liker=${likerUuid}&liked=${likedUuid}`,
+        { credentials: 'include' }
     );
     return handleResponse(response);
   },
 
   create: async (likerUuid, likedUuid) => {
     const response = await fetch(
-      `${BASE_URL}/api/like?likerUuid=${likerUuid}&likedUuid=${likedUuid}`,
-      {
-        method: "POST",
-        credentials: 'include'
-      }
+        `${BASE_URL}/api/like?likerUuid=${likerUuid}&likedUuid=${likedUuid}`,
+        {
+          method: "POST",
+          credentials: 'include'
+        }
     );
     return handleResponse(response);
   },
