@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Helper to format profile data for display
@@ -20,6 +21,8 @@ const formatProfile = (data, userType) => {
       bereich: data.bereich || "N/A",
       teamDescription: data.teamDescription || "",
       description: data.description || "No description available",
+      studied: data.studied,
+      teamsLink: data.teamsLink || "",
     };
   }
 
@@ -35,11 +38,12 @@ const formatProfile = (data, userType) => {
     location: data.officelokation?.join(", ") || "N/A",
     skills: data.codinglanguages || [],
     description: data.description || "No description available",
+    teamsLink: data.teamsLink || "",
   };
 };
 
 export default function ProfileCard({ profile: rawProfile, userType, onSkip, onConnect, loading }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [showDescriptionPopup, setShowDescriptionPopup] = useState(false);
 
   if (loading) {
     return (
@@ -84,54 +88,93 @@ export default function ProfileCard({ profile: rawProfile, userType, onSkip, onC
           <div>{profile.location}</div>
         </div>
         {userType === "BE" ? (
-          <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
-            <span className="font-semibold">Bereich</span>
-            <div>{profile.bereich}</div>
-          </div>
+          <>
+            <div className="md:space-y-1">
+              <span className="font-semibold">Bereich</span>
+              <div>{profile.bereich}</div>
+            </div>
+            <div className="md:space-y-1">
+              <span className="font-semibold">Studiert</span>
+              <div>{profile.studied ? "Ja" : "Nein"}</div>
+            </div>
+          </>
         ) : (
           <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
             <span className="font-semibold">Programmiersprachen</span>
             <div>{profile.skills.length > 0 ? profile.skills.join(", ") : "N/A"}</div>
           </div>
         )}
+        {profile.teamsLink && (
+          <div className="md:space-y-1">
+            <span className="font-semibold">Teams</span>
+            <div>
+              <a href={profile.teamsLink} target="_blank" rel="noopener noreferrer" className="text-primary underline text-xs md:text-sm">
+                Teams Link
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Description */}
-      <div className="text-sm mb-5 md:mb-10 md:space-y-2 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-[500px]">
+      {/* Description with popup button */}
+      <div className="text-sm mb-5 md:mb-10 min-w-[280px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-[500px]">
         <span className="font-semibold">Description</span>
-
-        {/* Invisible text to maintain width */}
-        <div className="invisible h-0 overflow-hidden mt-1 md:mt-3 md:leading-relaxed" aria-hidden="true">
+        <div className="mt-1 md:mt-2 text-muted-foreground line-clamp-2">
           {profile.description}
         </div>
-
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden mt-1 md:mt-3 md:leading-relaxed"
-            >
-              {profile.description}
-              {userType === "BE" && profile.teamDescription && (
-                <div className="mt-3">
-                  <span className="font-semibold">Team: </span>
-                  {profile.teamDescription}
-                </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="mt-1 text-primary font-medium text-sm md:text-base"
+          onClick={() => setShowDescriptionPopup(true)}
+          className="mt-2 text-primary font-medium text-sm md:text-base"
         >
-          {isOpen ? "Show less" : "Read more"}
+          Read more
         </button>
       </div>
+
+      {/* Description Popup - rendered via portal to escape Framer Motion transform context */}
+      {createPortal(
+        <AnimatePresence>
+          {showDescriptionPopup && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              onClick={() => setShowDescriptionPopup(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">{profile.name}</h3>
+                  <button
+                    onClick={() => setShowDescriptionPopup(false)}
+                    className="text-muted-foreground hover:text-foreground text-xl font-bold"
+                  >
+                    &times;
+                  </button>
+                </div>
+                <div className="space-y-4 text-sm leading-relaxed">
+                  <div>
+                    <span className="font-semibold">Description</span>
+                    <p className="mt-1 text-muted-foreground">{profile.description}</p>
+                  </div>
+                  {userType === "BE" && profile.teamDescription && (
+                    <div>
+                      <span className="font-semibold">Team</span>
+                      <p className="mt-1 text-muted-foreground">{profile.teamDescription}</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
 
 

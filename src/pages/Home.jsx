@@ -221,15 +221,26 @@ export default function Home() {
           <div className="text-muted-foreground max-w-md md:max-w-2xl text-base md:text-lg">
             Start connecting to your BE's
           </div>
-          <button
-            onClick={() => setDisplay(false)}
-            className="shadow-md m-2 md:m-4 bg-card py-0.5 px-1.5 md:py-2 md:px-4 border border-border rounded md:text-base
-              hover:bg-card/80 hover:shadow-lg
-              active:translate-y-0.5 active:shadow-sm
-              transition-transform duration-150"
-          >
-            START
-          </button>
+          <div className="flex gap-3 m-2 md:m-4">
+            <button
+              onClick={() => setDisplay(false)}
+              className="shadow-md bg-card py-0.5 px-1.5 md:py-2 md:px-4 border border-border rounded md:text-base
+                hover:bg-card/80 hover:shadow-lg
+                active:translate-y-0.5 active:shadow-sm
+                transition-transform duration-150"
+            >
+              START
+            </button>
+            <button
+              onClick={() => navigate("/matches")}
+              className="shadow-md bg-primary text-white py-0.5 px-1.5 md:py-2 md:px-4 rounded md:text-base
+                hover:opacity-90 hover:shadow-lg
+                active:translate-y-0.5 active:shadow-sm
+                transition-transform duration-150"
+            >
+              View Matches
+            </button>
+          </div>
         </div>
       ) : (
         <AnimatePresence mode="wait">
@@ -257,16 +268,24 @@ export default function Home() {
           {visible && !currentProfile && !loading && (
             <div className="text-center text-muted-foreground">
               <div className="text-xl mb-4">No more profiles available</div>
-              <button
-                onClick={() => {
-                  setFeedProfiles([])
-                  setFeedIndex(0)
-                  setDisplay(true)
-                }}
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"
-              >
-                Start Over
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => {
+                    setFeedProfiles([])
+                    setFeedIndex(0)
+                    setDisplay(true)
+                  }}
+                  className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"
+                >
+                  Start Over
+                </button>
+                <button
+                  onClick={() => navigate("/matches")}
+                  className="border border-primary text-primary px-6 py-2 rounded-lg hover:bg-primary/10 transition"
+                >
+                  View Matches
+                </button>
+              </div>
             </div>
           )}
         </AnimatePresence>

@@ -1,11 +1,12 @@
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaConnectdevelop } from "react-icons/fa6";
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Header() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, isAuthenticated, logout } = useAuth();
     const [isHovered, setIsHovered] = useState(false);
     const [theme, setTheme] = useState(() =>
@@ -43,6 +44,15 @@ export default function Header() {
           </div>
         </Link>
         <div className="flex items-center gap-4">
+          {/* Nav Link: switches between Matches and Home*/}
+          {isAuthenticated && (
+            <Link
+              to={location.pathname === "/matches" ? "/" : "/matches"}
+              className="text-sm px-3 py-1.5 rounded border border-border hover:bg-primary hover:text-white transition font-medium"
+            >
+              {location.pathname === "/matches" ? "Home" : "Matches"}
+            </Link>
+          )}
           {/* User Info */}
           {isAuthenticated && user && (
             <div className="flex items-center gap-3">
