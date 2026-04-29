@@ -13,6 +13,9 @@ export default function Matches() {
   const [error, setError] = useState(null);
   const [checkingProfile, setCheckingProfile] = useState(true);
 
+  // Determine the type of matched profiles (opposite of logged-in user)
+  const matchedProfileType = authUser?.profileType === "NWKR" ? "BE" : "NWKR";
+
   // Get the user's UUID based on their profile
   const getUserUuid = () => {
     if (!authUser) return null;
@@ -146,7 +149,11 @@ export default function Matches() {
                 />
                 <div className="flex-1">
                   <div className="font-bold text-lg">{match.name}</div>
-                  <div className="text-sm text-muted-foreground">{match.bereich || "N/A"}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {matchedProfileType === "BE"
+                      ? (match.bereich || "N/A")
+                      : (match.bildungsgang?.join(", ") || "N/A")}
+                  </div>
                 </div>
               </div>
               <div className="text-sm text-muted-foreground line-clamp-2">
@@ -202,16 +209,19 @@ export default function Matches() {
                   className="w-32 h-32 rounded-full object-cover border-4 border-primary mx-auto md:mx-0"
                 />
                 <div className="flex-1">
+                  {selectedMatch.birthday && (
+                    <div className="mb-3">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Geburtsjahr</div>
+                      <div className="text-base">
+                        {new Date(selectedMatch.birthday).getFullYear()}
+                        {" "}({new Date().getFullYear() - new Date(selectedMatch.birthday).getFullYear()} Jahre)
+                      </div>
+                    </div>
+                  )}
                   <div className="mb-3">
                     <div className="text-sm font-semibold text-muted-foreground mb-1">Email</div>
                     <div className="text-base break-all">{selectedMatch.email}</div>
                   </div>
-                  {selectedMatch.bereich && (
-                    <div className="mb-3">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bereich</div>
-                      <div className="text-base">{selectedMatch.bereich}</div>
-                    </div>
-                  )}
                   {selectedMatch.officelokation && (
                     <div className="mb-3">
                       <div className="text-sm font-semibold text-muted-foreground mb-1">Standort</div>
@@ -221,24 +231,58 @@ export default function Matches() {
                 </div>
               </div>
 
+              {/* BE-specific fields */}
+              {matchedProfileType === "BE" && (
+                <>
+                  {selectedMatch.bereich && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bereich</div>
+                      <div className="text-base">{selectedMatch.bereich}</div>
+                    </div>
+                  )}
+                  {selectedMatch.bildungBetreuen && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bildung Betreuen</div>
+                      <div className="text-base">{selectedMatch.bildungBetreuen.join(", ")}</div>
+                    </div>
+                  )}
+                  {selectedMatch.studied !== undefined && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Studiert</div>
+                      <div className="text-base">{selectedMatch.studied ? "Ja" : "Nein"}</div>
+                    </div>
+                  )}
+                  {selectedMatch.teamDescription && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Team</div>
+                      <div className="text-base leading-relaxed">{selectedMatch.teamDescription}</div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* NWKR-specific fields */}
+              {matchedProfileType === "NWKR" && (
+                <>
+                  {selectedMatch.bildungsgang && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bildungsgang</div>
+                      <div className="text-base">{selectedMatch.bildungsgang.join(", ")}</div>
+                    </div>
+                  )}
+                  {selectedMatch.codinglanguages && selectedMatch.codinglanguages.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Programmiersprachen</div>
+                      <div className="text-base">{selectedMatch.codinglanguages.join(", ")}</div>
+                    </div>
+                  )}
+                </>
+              )}
+
               {selectedMatch.description && (
                 <div className="mb-6">
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">Description</div>
+                  <div className="text-sm font-semibold text-muted-foreground mb-2">Beschreibung</div>
                   <div className="text-base leading-relaxed">{selectedMatch.description}</div>
-                </div>
-              )}
-
-              {selectedMatch.teamDescription && (
-                <div className="mb-6">
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">Team</div>
-                  <div className="text-base leading-relaxed">{selectedMatch.teamDescription}</div>
-                </div>
-              )}
-
-              {selectedMatch.bildungBetreuen && (
-                <div className="mb-6">
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">Bildung Betreuen</div>
-                  <div className="text-base">{selectedMatch.bildungBetreuen.join(", ")}</div>
                 </div>
               )}
 
@@ -249,7 +293,7 @@ export default function Matches() {
                   rel="noopener noreferrer"
                   className="block w-full bg-primary text-white text-center py-3 rounded-lg hover:opacity-90 transition font-medium"
                 >
-                  Open Teams Chat
+                  Teams Chat öffnen
                 </a>
               )}
             </motion.div>
