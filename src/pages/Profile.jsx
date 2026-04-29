@@ -161,13 +161,27 @@ export default function Profile() {
   };
 
   const handleBeChange = (e) => {
-    const { name, value, type, options } = e.target;
+    const { name, value, type, options, checked } = e.target;
+
     if (type === "select-multiple") {
       const values = Array.from(options)
           .filter((o) => o.selected)
           .map((o) => o.value);
       setBeForm((prev) => ({ ...prev, [name]: values }));
-    } else {
+    }
+    else if (type === "checkbox") {
+      setBeForm((prev) => {
+        const currentArray = Array.isArray(prev[name]) ? prev[name] : [];
+
+        return {
+          ...prev,
+          [name]: checked
+              ? [...currentArray, value] // Wenn angeklickt, zum Array hinzufügen
+              : currentArray.filter((item) => item !== value), // Wenn abgewählt, aus Array entfernen
+        };
+      });
+    }
+    else {
       setBeForm((prev) => ({ ...prev, [name]: value }));
     }
   };
@@ -518,9 +532,9 @@ export default function Profile() {
                           >
                             <input
                                 type="checkbox"
-                                name="bildungsgang[]"
+                                name="bildungBetreuen"
                                 value={option}
-                                checked={nwkrForm.bildungsgang.includes(option)}
+                                checked={beForm.bildungBetreuen.includes(option)}
                                 onChange={handleChange}
                                 className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
                             />
