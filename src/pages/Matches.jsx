@@ -151,7 +151,7 @@ export default function Matches() {
                   <div className="font-bold text-lg">{match.name}</div>
                   <div className="text-sm text-muted-foreground">
                     {matchedProfileType === "BE"
-                      ? (match.bereich || "N/A")
+                      ? (match.bildungBetreuen?.join(", ") || "N/A")
                       : (match.bildungsgang?.join(", ") || "N/A")}
                   </div>
                 </div>
@@ -222,10 +222,10 @@ export default function Matches() {
                     <div className="text-sm font-semibold text-muted-foreground mb-1">Email</div>
                     <div className="text-base break-all">{selectedMatch.email}</div>
                   </div>
-                  {selectedMatch.officelokation && (
+                  {selectedMatch.officelocation && (
                     <div className="mb-3">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Standort</div>
-                      <div className="text-base">{selectedMatch.officelokation.join(", ")}</div>
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Location</div>
+                      <div className="text-base">{selectedMatch.officelocation.join(", ")}</div>
                     </div>
                   )}
                 </div>
@@ -234,22 +234,10 @@ export default function Matches() {
               {/* BE-specific fields */}
               {matchedProfileType === "BE" && (
                 <>
-                  {selectedMatch.bereich && (
-                    <div className="mb-4">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bereich</div>
-                      <div className="text-base">{selectedMatch.bereich}</div>
-                    </div>
-                  )}
                   {selectedMatch.bildungBetreuen && (
                     <div className="mb-4">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bildung Betreuen</div>
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Searching for educational course:</div>
                       <div className="text-base">{selectedMatch.bildungBetreuen.join(", ")}</div>
-                    </div>
-                  )}
-                  {selectedMatch.studied !== undefined && (
-                    <div className="mb-4">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Studiert</div>
-                      <div className="text-base">{selectedMatch.studied ? "Ja" : "Nein"}</div>
                     </div>
                   )}
                   {selectedMatch.teamDescription && (
@@ -266,14 +254,8 @@ export default function Matches() {
                 <>
                   {selectedMatch.bildungsgang && (
                     <div className="mb-4">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Bildungsgang</div>
+                      <div className="text-sm font-semibold text-muted-foreground mb-1">Educational Course</div>
                       <div className="text-base">{selectedMatch.bildungsgang.join(", ")}</div>
-                    </div>
-                  )}
-                  {selectedMatch.codinglanguages && selectedMatch.codinglanguages.length > 0 && (
-                    <div className="mb-4">
-                      <div className="text-sm font-semibold text-muted-foreground mb-1">Programmiersprachen</div>
-                      <div className="text-base">{selectedMatch.codinglanguages.join(", ")}</div>
                     </div>
                   )}
                 </>
@@ -281,7 +263,7 @@ export default function Matches() {
 
               {selectedMatch.description && (
                 <div className="mb-6">
-                  <div className="text-sm font-semibold text-muted-foreground mb-2">Beschreibung</div>
+                  <div className="text-sm font-semibold text-muted-foreground mb-2">Description</div>
                   <div className="text-base leading-relaxed">{selectedMatch.description}</div>
                 </div>
               )}
@@ -293,7 +275,7 @@ export default function Matches() {
                   rel="noopener noreferrer"
                   className="block w-full bg-primary text-white text-center py-3 rounded-lg hover:opacity-90 transition font-medium"
                 >
-                  Teams Chat öffnen
+                  Open Teams Chat
                 </a>
               )}
             </motion.div>

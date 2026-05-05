@@ -728,7 +728,7 @@ const [isOpen, setIsOpen] = useState(false);
         uuid, name, birthYear, age, email,
         avatar: pictureLink,
         study: bildungBetreuen.join(", "),
-        location: officelokation.join(", "),
+        location: officelocation.join(", "),
         bereich,
         teamDescription,
         description
@@ -740,7 +740,7 @@ const [isOpen, setIsOpen] = useState(false);
         uuid, name, birthYear, age, email,
         avatar: pictureLink,
         study: bildungsgang.join(", "),
-        location: officelokation.join(", "),
+        location: officelocation.join(", "),
         skills: codinglanguages,
         description
       }

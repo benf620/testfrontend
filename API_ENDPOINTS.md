@@ -24,7 +24,7 @@
   "email": "user@example.com",
   "teamsLink": "string",
   "bildungsgang": ["INFORMATIK", "WIRTSCHFTSINFORMATIK"],
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": ["WINTERFELDSTRASSE"],
   "pictureLink": "string",
   "codinglanguages": ["PYTHON", "C", "CPP", "JAVA", "JAVASCRIPT", "ASM", "CSHARP"],
   "description": "string"
@@ -43,7 +43,7 @@
   "birthday": "2024-02-13T00:00:00",
   "email": "user@example.com",
   "bildungsgang": ["INFORMATIK"],
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": ["WINTERFELDSTRASSE"],
   "pictureLink": "string",
   "codinglanguages": ["PYTHON"],
   "description": "string"
@@ -66,7 +66,7 @@
   "birthday": "2024-02-13T00:00:00",
   "email": "user@example.com",
   "bildungsgang": ["INFORMATIK"],
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": ["WINTERFELDSTRASSE"],
   "pictureLink": "string",
   "codinglanguages": ["PYTHON"],
   "description": "string"
@@ -106,6 +106,7 @@
 - `id` (int, query) - Business expert ID
 
 **Response**:
+
 ```json
 {
   "id": 1,
@@ -115,9 +116,13 @@
   "email": "expert@example.com",
   "studied": true,
   "bereich": "string",
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": [
+    "WINTERFELDSTRASSE"
+  ],
   "pictureLink": "string",
-  "bildungBetreuen": ["INFORMATIK"],
+  "bildungBetreuen": [
+    "INFORMATIK"
+  ],
   "teamDescription": "string",
   "description": "string"
 }
@@ -129,6 +134,7 @@
 **Description**: Create a new business expert
 
 **Request Body**:
+
 ```json
 {
   "name": "string",
@@ -136,9 +142,13 @@
   "email": "expert@example.com",
   "studied": true,
   "bereich": "string",
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": [
+    "WINTERFELDSTRASSE"
+  ],
   "pictureLink": "string",
-  "bildungBetreuen": ["INFORMATIK"],
+  "bildungBetreuen": [
+    "INFORMATIK"
+  ],
   "teamDescription": "string",
   "description": "string"
 }
@@ -155,6 +165,7 @@
 - `id` (int, query) - Business expert ID
 
 **Request Body**:
+
 ```json
 {
   "name": "string",
@@ -163,9 +174,13 @@
   "studied": true,
   "bereich": "string",
   "pictureLink": "string",
-  "bildungBetreuen": ["INFORMATIK"],
+  "bildungBetreuen": [
+    "INFORMATIK"
+  ],
   "teamDescription": "string",
-  "officelokation": ["WINTERFELDSTRASSE"],
+  "officelocation": [
+    "WINTERFELDSTRASSE"
+  ],
   "description": "string"
 }
 ```

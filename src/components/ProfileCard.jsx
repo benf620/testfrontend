@@ -16,7 +16,7 @@ const formatProfile = (data, userType) => {
       email: data.email,
       avatar: data.pictureLink || "https://i.pravatar.cc/150?img=12",
       study: data.bildungBetreuen?.join(", ") || "N/A",
-      location: data.officelokation?.join(", ") || "N/A",
+      location: data.officelocation?.join(", ") || "N/A",
       skills: [],
       bereich: data.bereich || "N/A",
       teamDescription: data.teamDescription || "",
@@ -35,7 +35,7 @@ const formatProfile = (data, userType) => {
     email: data.email,
     avatar: data.pictureLink || "https://i.pravatar.cc/150?img=12",
     study: data.bildungsgang?.join(", ") || "N/A",
-    location: data.officelokation?.join(", ") || "N/A",
+    location: data.officelocation?.join(", ") || "N/A",
     skills: data.codinglanguages || [],
     description: data.description || "No description available",
     teamsLink: data.teamsLink || "",
@@ -69,7 +69,7 @@ export default function ProfileCard({ profile: rawProfile, userType, onSkip, onC
         <div className="text-center sm:text-left">
           <div className="text-xl md:text-2xl font-bold md:mb-2">{profile.name}</div>
           <div className="text-xs md:text-sm text-muted-foreground mt-1 sm:mt-0 md:mt-2 md:mb-1">
-            {profile.birthYear} ({profile.age} Jahre)
+            {profile.birthYear} ({profile.age} years old)
           </div>
           <div className="text-xs md:text-sm text-muted-foreground break-all">
             {profile.email}
@@ -80,40 +80,13 @@ export default function ProfileCard({ profile: rawProfile, userType, onSkip, onC
       {/* Grid für Details */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 lg:gap-8 text-sm mb-4 md:mb-10">
         <div className="md:space-y-1">
-          <span className="font-semibold">{userType === "BE" ? "Bildung Betreuen" : "Studiengang"}</span>
+          <span className="font-semibold">{userType === "BE" ? "Searching for educational course:" : "Educational Course"}</span>
           <div>{profile.study}</div>
         </div>
         <div className="md:space-y-1">
-          <span className="font-semibold">Standort</span>
+          <span className="font-semibold">Location</span>
           <div>{profile.location}</div>
         </div>
-        {userType === "BE" ? (
-          <>
-            <div className="md:space-y-1">
-              <span className="font-semibold">Bereich</span>
-              <div>{profile.bereich}</div>
-            </div>
-            <div className="md:space-y-1">
-              <span className="font-semibold">Studiert</span>
-              <div>{profile.studied ? "Ja" : "Nein"}</div>
-            </div>
-          </>
-        ) : (
-          <div className="sm:col-span-2 md:col-span-1 md:space-y-1">
-            <span className="font-semibold">Programmiersprachen</span>
-            <div>{profile.skills.length > 0 ? profile.skills.join(", ") : "N/A"}</div>
-          </div>
-        )}
-        {profile.teamsLink && (
-          <div className="md:space-y-1">
-            <span className="font-semibold">Teams</span>
-            <div>
-              <a href={profile.teamsLink} target="_blank" rel="noopener noreferrer" className="text-primary underline text-xs md:text-sm">
-                Teams Link
-              </a>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Description with popup button */}

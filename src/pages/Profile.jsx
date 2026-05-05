@@ -35,7 +35,7 @@ export default function Profile() {
     birthday: "",
     email: authUser?.email || "",
     bildungsgang: "",
-    officelokation: "",
+    officelocation: "",
     pictureLink: "",
     codinglanguages: [],
     description: "",
@@ -46,7 +46,7 @@ export default function Profile() {
     name: "",
     birthday: "",
     email: authUser?.email || "",
-    officelokation: "",
+    officelocation: "",
     pictureLink: "",
     bildungBetreuen: [],
     teamDescription: "",
@@ -79,9 +79,9 @@ export default function Profile() {
               bildungsgang: Array.isArray(data.bildungsgang)
                   ? data.bildungsgang[0] ?? ""
                   : data.bildungsgang ?? "",
-              officelokation: Array.isArray(data.officelokation)
-                  ? data.officelokation[0] ?? ""
-                  : data.officelokation ?? "",
+              officelocation: Array.isArray(data.officelocation)
+                  ? data.officelocation[0] ?? ""
+                  : data.officelocation ?? "",
             });
             if (data.pictureLink) setImagePreview(data.pictureLink);
           }
@@ -93,9 +93,9 @@ export default function Profile() {
               birthday: data.birthday
                   ? new Date(data.birthday).toISOString().slice(0, 10)
                   : "",
-              officelokation: Array.isArray(data.officelokation)
-                  ? data.officelokation[0] ?? ""
-                  : data.officelokation ?? "",
+              officelocation: Array.isArray(data.officelocation)
+                  ? data.officelocation[0] ?? ""
+                  : data.officelocation ?? "",
               bildungBetreuen: Array.isArray(data.bildungBetreuen)
                   ? data.bildungBetreuen
                   : data.bildungBetreuen
@@ -186,7 +186,7 @@ export default function Profile() {
     }
   };
 
-  const normalizeOfficelokation = (value) => (value ? [value] : []);
+  const normalizeOfficelocation = (value) => (value ? [value] : []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -201,7 +201,7 @@ export default function Profile() {
           birthday: nwkrForm.birthday
               ? new Date(nwkrForm.birthday).toISOString()
               : null,
-          officelokation: normalizeOfficelokation(nwkrForm.officelokation),
+          officelocation: normalizeOfficelocation(nwkrForm.officelocation),
           bildungsgang: nwkrForm.bildungsgang ? [nwkrForm.bildungsgang] : [],
         };
 
@@ -233,9 +233,9 @@ export default function Profile() {
             bildungsgang: Array.isArray(response.bildungsgang)
                 ? response.bildungsgang[0] ?? ""
                 : response.bildungsgang ?? "",
-            officelokation: Array.isArray(response.officelokation)
-                ? response.officelokation[0] ?? ""
-                : response.officelokation ?? "",
+            officelocation: Array.isArray(response.officelocation)
+                ? response.officelocation[0] ?? ""
+                : response.officelocation ?? "",
           });
           if (response.pictureLink) setImagePreview(response.pictureLink);
           setImageFile(null);
@@ -257,7 +257,7 @@ export default function Profile() {
           birthday: beForm.birthday
               ? new Date(beForm.birthday).toISOString()
               : null,
-          officelokation: normalizeOfficelokation(beForm.officelokation),
+          officelocation: normalizeOfficelocation(beForm.officelocation),
         };
 
         if (imageFile) {
@@ -285,9 +285,9 @@ export default function Profile() {
             birthday: response.birthday
                 ? new Date(response.birthday).toISOString().slice(0, 10)
                 : "",
-            officelokation: Array.isArray(response.officelokation)
-                ? response.officelokation[0] ?? ""
-                : response.officelokation ?? "",
+            officelocation: Array.isArray(response.officelocation)
+                ? response.officelocation[0] ?? ""
+                : response.officelocation ?? "",
             bildungBetreuen: Array.isArray(response.bildungBetreuen)
                 ? response.bildungBetreuen
                 : [],
@@ -522,7 +522,7 @@ export default function Profile() {
                   <h2 className="text-lg font-semibold">Professional Information</h2>
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Searching for Educational Course
+                       Looking for NwKr with Educational Course:
                     </label>
                     <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
                       {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
@@ -566,8 +566,8 @@ export default function Profile() {
                   Office Location
                 </label>
                 <select
-                    name="officelokation"
-                    value={form.officelokation}
+                    name="officelocation"
+                    value={form.officelocation}
                     onChange={handleChange}
                     className={selectClass}
                 >
