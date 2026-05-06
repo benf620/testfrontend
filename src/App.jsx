@@ -12,7 +12,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      <main className="py-5 px-2.5">
+      <main className="py-3 px-2 sm:py-4 sm:px-3 md:py-5 md:px-4 lg:px-6">
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />

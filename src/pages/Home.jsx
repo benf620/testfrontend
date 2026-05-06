@@ -214,17 +214,17 @@ export default function Home() {
       )}
 
       {display ? (
-        <div className="flex flex-col items-center text-center">
-          <div className="text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-4 text-primary">
+        <div className="flex flex-col items-center text-center px-4">
+          <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 md:mb-4 text-primary">
             Welcome to Connect to Grow
           </div>
-          <div className="text-muted-foreground max-w-md md:max-w-2xl text-base md:text-lg">
+          <div className="text-muted-foreground max-w-md md:max-w-2xl text-sm sm:text-base md:text-lg">
             Start connecting to your BE's
           </div>
-          <div className="flex gap-3 m-2 md:m-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 m-3 md:m-4 w-full max-w-xs sm:max-w-none sm:w-auto">
             <button
               onClick={() => setDisplay(false)}
-              className="shadow-md bg-card py-0.5 px-1.5 md:py-2 md:px-4 border border-border rounded md:text-base
+              className="shadow-md bg-card py-2 px-4 sm:py-2 sm:px-4 md:py-2.5 md:px-5 border border-border rounded text-sm sm:text-base
                 hover:bg-card/80 hover:shadow-lg
                 active:translate-y-0.5 active:shadow-sm
                 transition-transform duration-150"
@@ -233,7 +233,7 @@ export default function Home() {
             </button>
             <button
               onClick={() => navigate("/matches")}
-              className="shadow-md bg-primary text-white py-0.5 px-1.5 md:py-2 md:px-4 rounded md:text-base
+              className="shadow-md bg-primary text-white py-2 px-4 sm:py-2 sm:px-4 md:py-2.5 md:px-5 rounded text-sm sm:text-base
                 hover:opacity-90 hover:shadow-lg
                 active:translate-y-0.5 active:shadow-sm
                 transition-transform duration-150"
@@ -266,8 +266,8 @@ export default function Home() {
             </motion.div>
           )}
           {visible && !currentProfile && !loading && (
-            <div className="text-center text-muted-foreground">
-              <div className="text-xl mb-4">No more profiles available</div>
+            <div className="text-center text-muted-foreground px-4">
+              <div className="text-lg sm:text-xl mb-4">No more profiles available</div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={() => {
@@ -275,13 +275,13 @@ export default function Home() {
                     setFeedIndex(0)
                     setDisplay(true)
                   }}
-                  className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90"
+                  className="bg-primary text-white px-5 sm:px-6 py-2 rounded-lg hover:opacity-90 text-sm sm:text-base"
                 >
                   Start Over
                 </button>
                 <button
                   onClick={() => navigate("/matches")}
-                  className="border border-primary text-primary px-6 py-2 rounded-lg hover:bg-primary/10 transition"
+                  className="border border-primary text-primary px-5 sm:px-6 py-2 rounded-lg hover:bg-primary/10 transition text-sm sm:text-base"
                 >
                   View Matches
                 </button>

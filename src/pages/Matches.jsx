@@ -117,8 +117,8 @@ export default function Matches() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Your Matches</h1>
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-primary">Your Matches</h1>
 
       {error && (
         <div className="mb-4 p-3 bg-muted border border-border rounded-lg text-sm text-muted-foreground">
@@ -127,12 +127,12 @@ export default function Matches() {
       )}
 
       {matches.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-xl text-muted-foreground mb-4">No matches yet</div>
-          <div className="text-sm text-muted-foreground">Start swiping to find your matches!</div>
+        <div className="text-center py-8 sm:py-12 px-4">
+          <div className="text-lg sm:text-xl text-muted-foreground mb-3 sm:mb-4">No matches yet</div>
+          <div className="text-xs sm:text-sm text-muted-foreground">Start swiping to find your matches!</div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {matches.map((match) => (
             <motion.div
               key={match.matchedUserUuid}

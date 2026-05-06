@@ -331,13 +331,13 @@ export default function Profile() {
       "w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary";
 
   return (
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <div className="bg-card border border-border rounded-2xl shadow-lg p-6 md:p-8">
-          <div className="mb-6">
-            <h1 className="text-2xl md:text-3xl font-bold text-primary">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 py-3 sm:py-4 md:py-6">
+        <div className="bg-card border border-border rounded-2xl shadow-lg p-4 sm:p-6 md:p-8">
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">
               Your Profile
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Profile Type:{" "}
               {userType === "NWKR"
                   ? "Nachwuchskraft (NwKR)"
@@ -359,36 +359,36 @@ export default function Profile() {
               </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* ── Basic Information ── */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Basic Information</h2>
+            <div className="space-y-3 sm:space-y-4">
+              <h2 className="text-base sm:text-lg font-semibold">Basic Information</h2>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
+                <label className="block text-xs sm:text-sm font-medium mb-1">Name</label>
                 <input
                     name="name"
                     placeholder="Full Name"
                     value={form.name}
                     onChange={handleChange}
                     required
-                    className={selectClass}
+                    className={`${selectClass} text-sm sm:text-base`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Birthday</label>
+                <label className="block text-xs sm:text-sm font-medium mb-1">Birthday</label>
                 <input
                     name="birthday"
                     type="date"
                     value={form.birthday}
                     onChange={handleChange}
-                    className={selectClass}
+                    className={`${selectClass} text-sm sm:text-base`}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <label className="block text-xs sm:text-sm font-medium mb-1">Email</label>
                 <input
                     name="email"
                     type="email"
@@ -396,22 +396,22 @@ export default function Profile() {
                     value={form.email}
                     onChange={handleChange}
                     required
-                    className={selectClass}
+                    className={`${selectClass} text-sm sm:text-base`}
                 />
               </div>
 
               {/* ── Profilbild ── */}
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-xs sm:text-sm font-medium mb-1">
                   Profile Picture
                 </label>
 
                 {imagePreview ? (
-                    <div className="flex flex-col items-start gap-3">
+                    <div className="flex flex-col items-center sm:items-start gap-3">
                       {/* Statische kreisförmige Vorschau */}
                       <div
                           className="rounded-full overflow-hidden border-3 border-primary shadow-lg bg-muted flex-shrink-0"
-                          style={{ width: 190, height: 190 }}
+                          style={{ width: 140, height: 140 }}
                       >
                         <img
                             src={imagePreview}
@@ -421,21 +421,22 @@ export default function Profile() {
                               height: "100%",
                               objectFit: "cover",
                             }}
+                            className="sm:w-[190px] sm:h-[190px]"
                         />
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <button
                             type="button"
                             onClick={() => fileInputRef.current?.click()}
-                            className="text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition"
+                            className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-border hover:bg-muted transition flex-1 sm:flex-initial"
                         >
                           Replace
                         </button>
                         <button
                             type="button"
                             onClick={clearImage}
-                            className="text-sm px-3 py-1.5 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 transition"
+                            className="text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10 transition flex-1 sm:flex-initial"
                         >
                           ✕ Remove
                         </button>
@@ -455,10 +456,10 @@ export default function Profile() {
                                 : "border-border bg-background hover:border-primary/60"
                         }`}
                     >
-                      <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+                      <div className="flex flex-col items-center justify-center gap-2 px-4 py-6 sm:py-8 text-center">
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
-                            className="w-8 h-8 text-muted-foreground"
+                            className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -470,7 +471,7 @@ export default function Profile() {
                               d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                           />
                         </svg>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">
                         Drop image here
                       </span>{" "}
@@ -496,17 +497,17 @@ export default function Profile() {
 
             {/* ── Type-specific fields ── */}
             {userType === "NWKR" ? (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Education & Skills</h2>
+                <div className="space-y-3 sm:space-y-4">
+                  <h2 className="text-base sm:text-lg font-semibold">Education & Skills</h2>
                   <div>
-                    <label className="block text-sm font-medium mb-1">
+                    <label className="block text-xs sm:text-sm font-medium mb-1">
                       Educational Course
                     </label>
                     <select
                         name="bildungsgang"
                         value={nwkrForm.bildungsgang}
                         onChange={handleNwkrChange}
-                        className={selectClass}
+                        className={`${selectClass} text-sm sm:text-base`}
                     >
                       <option value="">— Please select —</option>
                       {BILDUNGSGANG_OPTIONS.map((option) => (
@@ -518,13 +519,13 @@ export default function Profile() {
                   </div>
                 </div>
             ) : (
-                <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Professional Information</h2>
+                <div className="space-y-3 sm:space-y-4">
+                  <h2 className="text-base sm:text-lg font-semibold">Professional Information</h2>
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label className="block text-xs sm:text-sm font-medium mb-2">
                       Searching for Educational Course
                     </label>
-                    <div className="space-y-2 p-3 bg-background border border-border rounded-lg">
+                    <div className="space-y-2 p-2 sm:p-3 bg-background border border-border rounded-lg">
                       {["INFORMATIK", "WIRTSCHFTSINFORMATIK"].map((option) => (
                           <label
                               key={option}
@@ -536,15 +537,15 @@ export default function Profile() {
                                 value={option}
                                 checked={beForm.bildungBetreuen.includes(option)}
                                 onChange={handleChange}
-                                className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary"
+                                className="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary flex-shrink-0"
                             />
-                            <span className="text-sm">{option}</span>
+                            <span className="text-xs sm:text-sm">{option}</span>
                           </label>
                       ))}
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">
+                    <label className="block text-xs sm:text-sm font-medium mb-1">
                       Work Area
                     </label>
                     <textarea
@@ -553,23 +554,23 @@ export default function Profile() {
                         value={beForm.teamDescription}
                         onChange={handleBeChange}
                         rows={3}
-                        className={`${selectClass} resize-none`}
+                        className={`${selectClass} resize-none text-sm sm:text-base`}
                     />
                   </div>
                 </div>
             )}
 
             {/* ── Common fields ── */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-xs sm:text-sm font-medium mb-1">
                   Office Location
                 </label>
                 <select
                     name="officelokation"
                     value={form.officelokation}
                     onChange={handleChange}
-                    className={selectClass}
+                    className={`${selectClass} text-sm sm:text-base`}
                 >
                   <option value="">— Please select —</option>
                   {OFFICE_OPTIONS.map((option) => (
@@ -581,7 +582,7 @@ export default function Profile() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-xs sm:text-sm font-medium mb-1">
                   Description
                 </label>
                 <textarea
@@ -589,8 +590,8 @@ export default function Profile() {
                     placeholder="Tell others about yourself"
                     value={form.description}
                     onChange={handleChange}
-                    rows={5}
-                    className={`${selectClass} resize-none`}
+                    rows={4}
+                    className={`${selectClass} resize-none text-sm sm:text-base sm:rows-5`}
                 />
               </div>
             </div>
@@ -598,7 +599,7 @@ export default function Profile() {
             <button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-primary text-white py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-white py-2.5 sm:py-3 rounded-lg font-medium hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {saving ? "Saving..." : "Save Profile"}
             </button>

@@ -35,34 +35,34 @@ export default function Header() {
     };
 
     return (
-      <div className='flex justify-between items-center bg-card/50 text-secondary-foreground border-b border-border p-4'>
+      <div className='flex justify-between items-center bg-card/50 text-secondary-foreground border-b border-border p-2 sm:p-3 md:p-4'>
         <Link to="/" className='flex items-center hover:opacity-80 transition cursor-pointer'>
-          <FaConnectdevelop className='text-5xl mr-2 pt-2.5 text-primary'/>
-          <div>
-            <h1 className='text-xl font-bold'>ConnectToGrow</h1>
-            <p className='text-xs text-muted-foreground'>Tool to connect to BE's</p>
+          <FaConnectdevelop className='text-3xl sm:text-4xl md:text-5xl mr-1 sm:mr-2 pt-1 sm:pt-2.5 text-primary'/>
+          <div className='hidden sm:block'>
+            <h1 className='text-base sm:text-lg md:text-xl font-bold'>ConnectToGrow</h1>
+            <p className='text-xs text-muted-foreground hidden md:block'>Tool to connect to BE's</p>
           </div>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4">
           {/* Nav Link: switches between Matches and Home*/}
           {isAuthenticated && (
             <Link
               to={location.pathname === "/matches" ? "/" : "/matches"}
-              className="text-sm px-3 py-1.5 rounded border border-border hover:bg-primary hover:text-white transition font-medium"
+              className="text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded border border-border hover:bg-primary hover:text-white transition font-medium"
             >
               {location.pathname === "/matches" ? "Home" : "Matches"}
             </Link>
           )}
           {/* User Info */}
           {isAuthenticated && user && (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+              <div className="text-right hidden md:block">
                 <div className="text-sm font-medium">{user.email}</div>
                 <div className="text-xs text-muted-foreground">{user.profileType}</div>
               </div>
               <button
                 onClick={handleLogout}
-                className="text-xs px-3 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 transition"
+                className="text-xs px-2 sm:px-3 py-1 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 transition"
               >
                 Logout
               </button>
@@ -73,11 +73,11 @@ export default function Header() {
             onClick={() => setTheme(v => !v)}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className={`cursor-pointer rounded p-2 border border-border ${
+            className={`cursor-pointer rounded p-1.5 sm:p-2 border border-border ${
               isHovered ? "bg-primary text-secondary-foreground" : "bg-background text-secondary-foreground"
             }`}
           >
-            <IoSettingsOutline />
+            <IoSettingsOutline className="text-sm sm:text-base" />
           </div>
         </div>
       </div>
